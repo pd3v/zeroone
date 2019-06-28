@@ -1,2 +1,2 @@
 # wide
-__wide__ is library suitable for live coding music.
+__wide__ is a library suitable for live coding music.
