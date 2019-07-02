@@ -15,12 +15,13 @@
 #include <unordered_map>
 #include "generator.h"
 #include "instrument.h"
-#include "expression.h"
+#include "expression.hpp"
 
 #pragma cling load("/usr/local/lib/librtmidi.dylib")
 
 #define i(x) (*insts[std::to_string(x)])
-#define n(n,v,d,o) [&](){return std::vector<int>{n,v,d,o};}
+#define n(n,v,d,o) [&](){return std::vector<float>{n,v,d,o};}
+#define e(x) i(x).express // alias to time dependent helpers functions
 #define ccin(ch,func) (cc_t){ch,[](){return func;}}
 #define ccins(vct) std::vector<cc_t>vct
 #define nocc std::vector<cc_t>{}
@@ -39,8 +40,6 @@ float _bpm = 60.0;
 const int _beatDivision = 200;
 long _beatDur = 60.0/_bpm*_refBeatDur; // nanoseconds
 long _beatDivisionDur = _beatDur/_beatDivision; // nanoseconds
-
-Expression e;
 
 using namespace std::chrono;
 
@@ -139,7 +138,7 @@ void scale(Instrument* i, std::vector<int>scale) {
   i->scale(scale);
 }
 
-void play(Instrument* inst, std::function<std::vector<int>(void)>f) {
+void play(Instrument* inst, std::function<std::vector<float>(void)>f) {
   inst->play(f);
 }
 
