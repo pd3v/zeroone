@@ -4,15 +4,11 @@ __wide__ is an DSLish API for live coding music. It sends midi messages to any s
 
 ### Dependencies
 
-RtMidi library.
-
-It can be downloaded here: [http://www.music.mcgill.ca/~gary/rtmidi/](http://)
+[RtMidi](http://www.music.mcgill.ca/~gary/rtmidi/) library
 
 ### Live coding
 
-__cling__ (an interative interperter C++ interpreter) is for the live coding enverionment.
-
-It can be download here: [https://github.com/root-project/cling.git](http://)
+[__cling__](https://github.com/root-project/cling.git) (an interative interperter C++ interpreter) is for the live coding enverionment.
 
 *Or you still can compile/link __wide__ as any other c++ library and code with it as so.*
 	
@@ -29,9 +25,8 @@ It can be download here: [https://github.com/root-project/cling.git](http://)
 	.x <path to>sequencer.cpp
 #### 3. after message "wide is on..." appears, type:
 	
-`// Instrument "0" sends C notes to midi channel 0, 100 velocity, 1/4 duration, and 4th octave`	
-
-`i(0).play(n(0,100,4,4))` 
+`i(0).play(n(0,100,4,4)) // Instrument "0" sends C notes to midi channel 0, 100 velocity, 1/4 duration, and 4th octave`	
+	
 
 
 
