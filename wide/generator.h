@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <queue>
 
-#define SILENCE [](){return std::vector<int> {0,0,4,1};} // silent note
+#define SILENCE [](){return std::vector<float> {0,0,4,1};} // silent note
 
 class StepTimer {
 public:
@@ -68,15 +68,17 @@ public:
   //void queuecc();
   void bpm(int bpm);
   int bpm();
-  note_t midiNote(const std::function<std::vector<int>(void)>& f);
+  note_t midiNote(const std::function<std::vector<float>(void)>& f);
   note_t note();
   note_t note(std::function<note_t(void)>& f);
   std::vector<int> midicc(cc_t _cc);
   void cc(std::vector<cc_t>& ccs);
   void scale(std::vector<int>scale);
   std::vector<int> scale();
-  void f(std::function<std::vector<int>(void)> f);
-  int ampToVel(double amp);
+  void f(std::function<std::vector<float>(void)> f);
+  int ampToVel(float amp);
+  
+  unsigned long int step = 0; // +1 for each note played
   
   std::queue<note_t> notesQueue;
   //std::queue<cc_t> ccQueue;
@@ -93,6 +95,7 @@ private:
   void clearNotesQueue();
   
   int _bpm = 60;
+  
   std::vector<int> _scale {0,2,4,5,7,9,11}; //Major scale
-  std::function<std::vector<int>(void)> _f = SILENCE;
+  std::function<std::vector<float>(void)> _f = SILENCE;
 };

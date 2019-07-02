@@ -71,19 +71,19 @@ std::vector<int> Generator::scale() {
   return _scale;
 }
 
-void Generator::f(std::function<std::vector<int>(void)> f) {
+void Generator::f(std::function<std::vector<float>(void)> f) {
   _f = f;
   clearNotesQueue();
 }
 
-note_t Generator::midiNote(const std::function<std::vector<int>(void)>& f) {
+note_t Generator::midiNote(const std::function<std::vector<float>(void)>& f) {
   note_t note;
-  std::vector<int> n = f();
+  std::vector<float> n = f();
   
-  note.note = _scale[n[0]]+12*n[3];
-  note.vel = n[1];
-  note.dur = duration[n[2]]/(_bpm/60.0);
-  note.oct = n[3];
+  note.note = (int) _scale[n[0]]+12*n[3];
+  note.vel = ampToVel(n[1]);
+  note.dur = (int) duration[n[2]]/(_bpm/60.0);
+  note.oct = (int) n[3];
   
   return note;
 }
@@ -101,8 +101,8 @@ std::vector<int> Generator::midicc(cc_t _cc) {
   return cc;
 }
 
-int Generator::ampToVel(double amp) {
-  return 127*amp;
+int Generator::ampToVel(float amp) {
+  return std::round(127*amp);
 }
 
 /*double Generator::midiNoteToFreq(double midiNote) {
