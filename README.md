@@ -25,7 +25,7 @@ __wide__ is an DSLish API for live coding music. It sends midi messages to any s
 	.x <path to>sequencer.cpp
 #### 3. after message "wide is on..." appears, type:
 	
-`i(0).play(n(0,100,4,4)) // Instrument "0" sends C notes to midi channel 0, 100 velocity, 1/4 duration, and 4th octave`	
+`i(0).play(n(0,100,4,4)) // Instrument "0" sends C notes to midi channel 1, 100 velocity, 1/4 duration, and 4th octave`	
 
 
 
