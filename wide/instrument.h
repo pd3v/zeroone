@@ -12,8 +12,9 @@
 #include <thread>
 #include <RtMidi.h>
 #include "generator.h"
+#include "expresstime.h"
 
-#define SILENCE [](){return std::vector<int> {0,0,4,1};}
+#define SILENCE [](){return std::vector<float> {0,0,4,1};}
 
 class Instrument {
 public:
@@ -24,8 +25,8 @@ public:
   std::vector<int> scale();
   void scale(std::vector<int> scale);
   int scaleSize();
-  void play(std::function<std::vector<int>(void)> f);
-  void playasap(std::function<std::vector<int>(void)> f);
+  void playonb(std::function<std::vector<float>(void)> f);
+  void play(std::function<std::vector<float>(void)> f);
   void playIt();
   void cc(std::vector<cc_t> ccs);
   void cc(); // cleans cc - same result as "nocc" directive
@@ -42,14 +43,15 @@ public:
   bool solo = false;
   bool playing = false;
   note_t n{0,0,4,1}; // Initial note
+  ExpressTime express;
   
 private:
   Generator _generator;
-  unsigned long int _step = 0; // +1 for each note played
+  //unsigned long int _step = 0; // +1 for each note played
   unsigned long _startTime;
   unsigned long _elapsedTime;
   
-  std::function<std::vector<int>(void)> _f;
+  std::function<std::vector<float>(void)> _f;
 
   cc_t _cc; // struct with channel and function
   std::vector<int> _ccCompute;

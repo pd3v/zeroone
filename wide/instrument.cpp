@@ -10,7 +10,7 @@
 #include <string>
 #include <thread>
 #include <RtMidi.h>
-#include "expression.h"
+//#include "expression.h"
 
 using namespace std::chrono;
 
@@ -49,7 +49,7 @@ int Instrument::scaleSize() {
   return (int)_generator.scale().size();
 }
 
-void Instrument::play(std::function<std::vector<int>(void)> f) {
+void Instrument::playonb(std::function<std::vector<float>(void)> f) {
   std::thread t([&](){
     while (true) {
       if (stepTimer.bar_start()) {
@@ -61,7 +61,7 @@ void Instrument::play(std::function<std::vector<int>(void)> f) {
   t.detach();
 }
 
-void Instrument::playasap(std::function<std::vector<int>(void)> f) {
+void Instrument::play(std::function<std::vector<float>(void)> f) {
   _generator.f(f);
 }
 
@@ -118,7 +118,9 @@ void Instrument::playIt() {
 
     std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));
 
-    Expression::step = _step++;
+    //Expression::step = _step++;
+    //_step = _generator.step;
+    //std::cout << "i:" << _generator.step << std::endl;
     playing = false;
   });
   t.detach();
