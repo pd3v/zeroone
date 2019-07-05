@@ -29,8 +29,6 @@
 
 using instrumentsMap = std::unordered_map<std::string, Instrument*>;
 
-extern std::unordered_map<int,int> instsSteps;
-
 const int NUM_INST = 5;
 
 std::thread seqThread;
@@ -91,8 +89,6 @@ int main() {
 void newinst(std::string id, int ch) {
   Instrument* inst = new Instrument(id, ch);
   insts.insert(std::pair<std::string,Instrument*>(id,inst));
-  
-  instsSteps.insert(std::make_pair<int,int>(std::stoi(id), 0));
 }
 
 void newinsts(std::vector<int> instsIds) {
