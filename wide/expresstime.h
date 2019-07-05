@@ -13,10 +13,6 @@
 
 class ExpressTime {
 public:
-  /*int rnd(int max);
-  int rnd(int min, int max);
-  int rnd(std::vector<int> range);
-  int rnd(std::vector<int> range, int min, int max);*/
   int whenMod(int count_turn);
   int revWhenMod(int count_turn);
   int midWhenMod(int count_turn);
