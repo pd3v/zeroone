@@ -5,12 +5,13 @@
 //
 
 #include "expresstime.h"
-#include <functional>
-#include <stdlib.h>
+//#include <functional>
+//#include <stdlib.h>
 #include <math.h>
-#include <iostream>
+//#include <iostream>
+#include <unordered_map>
 
-typedef std::vector<int> scale_t, chord_t;
+extern std::unordered_map<int,int> instsSteps;
 
 int ExpressTime::whenMod(int count_turn) {
   step++;
@@ -23,10 +24,6 @@ int ExpressTime::revWhenMod(int count_turn) {
 
 int ExpressTime::midWhenMod(int count_turn) {
   return whenMod(count_turn) <= count_turn/2 ? whenMod(count_turn-1)*2 : revWhenMod(count_turn)*2;
-}
-
-int ExpressTime::range(float value, float min, float max, float toMin, float toMax) {
-  return (int) fabsf((value-min)/(max-min)*(toMax-toMin)+toMin);
 }
 
 int ExpressTime::sine(float spread, float to) {
@@ -70,13 +67,3 @@ int ExpressTime::square(float spread, float from, float to) {
   return (int) value;
 }
 
-// ====================================
-// Scales
-
-scale_t chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
-scale_t maj        {0,2,4,5,7,9,11};
-scale_t min        {0,2,3,5,7,9,11};
-
-//Chords
-
-chord_t cMaj  {0,4,7};

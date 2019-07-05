@@ -118,9 +118,6 @@ void Instrument::playIt() {
 
     std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));
 
-    //Expression::step = _step++;
-    //_step = _generator.step;
-    //std::cout << "i:" << _generator.step << std::endl;
     playing = false;
   });
   t.detach();

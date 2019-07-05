@@ -21,12 +21,15 @@
 
 #define i(x) (*insts[std::to_string(x)])
 #define n(n,v,d,o) [&](){return std::vector<float>{n,v,d,o};}
-#define e(x) i(x).express // alias to time dependent helpers functions
+//#define c(c,v,d,o) [&](){return std::vector<float>{n,v,d,o};}
+#define e(x) i(x).express // alias to time dependent helper functions..not good
 #define ccin(ch,func) (cc_t){ch,[](){return func;}}
 #define ccins(vct) std::vector<cc_t>vct
 #define nocc std::vector<cc_t>{}
 
 using instrumentsMap = std::unordered_map<std::string, Instrument*>;
+
+extern std::unordered_map<int,int> instsSteps;
 
 const int NUM_INST = 5;
 
@@ -88,6 +91,8 @@ int main() {
 void newinst(std::string id, int ch) {
   Instrument* inst = new Instrument(id, ch);
   insts.insert(std::pair<std::string,Instrument*>(id,inst));
+  
+  instsSteps.insert(std::make_pair<int,int>(std::stoi(id), 0));
 }
 
 void newinsts(std::vector<int> instsIds) {

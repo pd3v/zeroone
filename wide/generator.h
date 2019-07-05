@@ -14,6 +14,8 @@
 
 #define SILENCE [](){return std::vector<float> {0,0,4,1};} // silent note
 
+std::unordered_map<int,int> instsSteps;
+
 class StepTimer {
 public:
   unsigned int step; // increment's resolution; set as 1/200
