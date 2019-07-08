@@ -9,7 +9,7 @@
 
 using namespace std;
 
-typedef vector<int> scale_t, chord_t;
+typedef vector<int> scaleType, chordType;
 
 float rnd(int max) {
   return (rand()%max)*1.;
@@ -34,13 +34,11 @@ float range(float value, float min, float max, float toMin, float toMax) {
 // ====================================
 // Scales
 
-scale_t Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
-scale_t Maj        {0,2,4,5,7,9,11};
-scale_t Min        {0,2,3,5,7,9,11};
+scaleType Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
+scaleType Major      {0,2,4,5,7,9,11};
+scaleType Minor      {0,2,3,5,7,9,11};
 
 //Chords
 
-chord_t cMaj  {0,4,7};
-chord_t cMin  {0,3,7};
-
-
+chordType Maj  {0,2,4};
+chordType Min  {0,1,4};
