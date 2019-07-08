@@ -1,6 +1,6 @@
 # wide 
 
-__wide__ is polyphonic instrument, multi-instrument, DSLish API for live coding music. It sends midi messages to any stand-alone synthesiser or DAW. Release v0.1.
+__wide__ is a polyphonic instrument, multi-instrument, DSLish API for live coding music. It sends midi messages to any stand-alone synthesiser or DAW. Release v0.1.
 
 ### Dependencies
 
