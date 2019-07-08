@@ -9,8 +9,10 @@
 #include <queue>
 #include <thread>
 
+#include <iostream>
+
 Generator::Generator() {
-  notesQueue.emplace(midiNote(SILENCE));
+  notesQueue.emplace((Notes){{0},0,4,1});
   queueNote();
 }
 
@@ -41,19 +43,19 @@ void Generator::queueNote() {
 }*/
 
 
-note_t Generator::note() {
-  note_t note;
+Notes Generator::notes() {
+  Notes notes;
   
   if (!notesQueue.empty()) {
-    note = notesQueue.front();
+    notes = notesQueue.front();
     notesQueue.pop();
   }
   
-  return note;
+  return notes;
 }
 
 void Generator::clearNotesQueue() {
-  std::queue<note_t> empty;
+  std::queue<Notes> empty;
   std::swap(notesQueue, empty);
 }
 
@@ -71,21 +73,25 @@ std::vector<int> Generator::scale() {
   return _scale;
 }
 
-void Generator::f(std::function<std::vector<float>(void)> f) {
+void Generator::f(std::function<Notes(void)> f) {
   _f = f;
   clearNotesQueue();
 }
 
-note_t Generator::midiNote(const std::function<std::vector<float>(void)>& f) {
-  note_t note;
-  std::vector<float> n = f();
+Notes Generator::midiNote(const std::function<Notes(void)>& f) {
+  Notes notes = f();
+  int i = 0;
   
-  note.note = (int) _scale[n[0]]+12*n[3];
-  note.vel = ampToVel(n[1]);
-  note.dur = (int) duration[n[2]]/(_bpm/60.0);
-  note.oct = (int) n[3];
+  for (auto& n : notes.notes) {
+    notes.notes[i] = (int) _scale[n]+12*notes.oct;
+    i++;
+  }
   
-  return note;
+  notes.amp = ampToVel(notes.amp);
+  notes.dur = static_cast<int>(duration[notes.dur]/(_bpm/60.0));
+  notes.oct = (int) notes.oct;
+  
+  return notes;
 }
 
 // cc channel(s) and function(s)
@@ -113,13 +119,13 @@ int Generator::ampToVel(float amp) {
   return midiNote/127.;
 }*/
 
-/*note_t Generator::midiFreqToNote(std::function<note_t(void)>& f) {
+/*Notes Generator::midiFreqToNote(std::function<Notes(void)>& f) {
   vector<int> n = Generator::_f();
-  note_t note;
+  Notes notes;
   
-  note.note = midiNoteToFreq(n[0] + 12 * n[3]);
-  note.vel = midiVelToAmp(n[1]);
-  note.dur = n[2];
+  notes.note = midiNoteToFreq(n[0] + 12 * n[3]);
+  notes.vel = midiVelToAmp(n[1]);
+  notes.dur = n[2];
   
-  return note;
+  return notes;
 }*/
