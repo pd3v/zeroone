@@ -1,6 +1,6 @@
 # wide 
 
-__wide__ is a polyphonic instrument, multi-instrument, DSLish API for live coding music. It sends midi messages to any stand-alone synthesiser or DAW. Release v0.1.
+__wide__ is a polyphonic instrument, multi-instrument, DSLish API for live coding music. It sends midi messages to any stand-alone synthesiser or DAW.
 
 ### Dependencies
 
@@ -16,8 +16,8 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish API for live codin
 
 ##### 1. run cling in terminal
 ##### 2. at cling prompt load *wide* by typing the following lines:
-	.x <path to>expresstime.h
-	.x <path to>expresstime.cpp
+	.x <path to>texpression.h
+	.x <path to>texpression.cpp
 	.x <path to>instrument.h
 	.x <path to>instrument.cpp
 	.x <path to>generator.h
@@ -25,7 +25,10 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish API for live codin
 	.x <path to>sequencer.cpp
 #### 3. after message "wide is on..." appears, type:
 	
-`i(0).play(n(0,0.9,4,4)) // Instrument "0" sends C notes to midi channel 1, 0.9 amplitude, 1/4 duration, and 4th octave`	
+`i(0).play(n(({0,2,4}),0.9,4,4)) // Instrument "0" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`	
 
+or
+
+`i(0).play(n(({0}),0.5,16,5)) // Instrument "0" sends c note to midi channel 1, 0.5 amplitude, 1/16 duration and 5th octave`
 
 
