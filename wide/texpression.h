@@ -11,7 +11,7 @@
 #include <vector>
 #include <functional>
 
-class ExpressTime {
+class TExpression {
 public:
   int whenMod(int count_turn);
   int revWhenMod(int count_turn);
