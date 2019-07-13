@@ -19,7 +19,7 @@ using noteDur = std::pair<int,float>;
 struct Notes {
   std::vector<int> notes;
   float amp;
-  unsigned int dur; // nanoseconds
+  unsigned long dur; // nanoseconds
   int oct;
 };
 

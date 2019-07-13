@@ -61,4 +61,3 @@ int TExpression::square(float spread, float from, float to) {
   
   return (int) value;
 }
-

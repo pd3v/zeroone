@@ -88,7 +88,7 @@ Notes Generator::midiNote(const std::function<Notes(void)>& f) {
   }
   
   notes.amp = ampToVel(notes.amp);
-  notes.dur = static_cast<int>(duration[notes.dur]/(_bpm/60.0));
+  notes.dur = (duration[static_cast<int>(notes.dur)]/(_bpm/60.0));
   notes.oct = (int) notes.oct;
   
   return notes;
