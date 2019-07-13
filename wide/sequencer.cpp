@@ -15,19 +15,21 @@
 #include <unordered_map>
 #include "generator.h"
 #include "instrument.h"
-#include "expression.h"
+#include "expression.hpp"
 
 #pragma cling load("/usr/local/lib/librtmidi.dylib")
 
 #define i(x) (*insts[std::to_string(x)])
-#define n(n,v,d,o) [&](){return std::vector<int>{n,v,d,o};}
+//#define n(n,v,d,o) [&](){return std::vector<float>{n,v,d,o};} // monophonic
+#define n(c,v,d,o) [&]()->Notes {return (Notes){(std::vector<int>c),v,d,o};} // polyphonic
+#define e(x) i(x).express // alias to time dependent helper functions..not good
 #define ccin(ch,func) (cc_t){ch,[](){return func;}}
 #define ccins(vct) std::vector<cc_t>vct
 #define nocc std::vector<cc_t>{}
 
 using instrumentsMap = std::unordered_map<std::string, Instrument*>;
 
-const int NUM_INST = 5;
+const int NUM_INST = 1;
 
 std::thread seqThread;
 pthread_t seqThreadHandle;
@@ -39,8 +41,6 @@ float _bpm = 60.0;
 const int _beatDivision = 200;
 long _beatDur = 60.0/_bpm*_refBeatDur; // nanoseconds
 long _beatDivisionDur = _beatDur/_beatDivision; // nanoseconds
-
-Expression e;
 
 using namespace std::chrono;
 
@@ -139,7 +139,7 @@ void scale(Instrument* i, std::vector<int>scale) {
   i->scale(scale);
 }
 
-void play(Instrument* inst, std::function<std::vector<int>(void)>f) {
+void play(Instrument* inst, std::function<Notes(void)>f) {
   inst->play(f);
 }
 

@@ -10,7 +10,6 @@
 #include <string>
 #include <thread>
 #include <RtMidi.h>
-#include "expression.h"
 
 using namespace std::chrono;
 
@@ -22,9 +21,11 @@ Instrument::Instrument(std::string _id, int _ch)
   noteMessage.push_back(0);
   noteMessage.push_back(0);
   
-  ccMessage.push_back(0);
-  ccMessage.push_back(0);
-  ccMessage.push_back(0);
+  //cc
+  /*ccMessage.push_back(0);
+   ccMessage.push_back(0);
+   ccMessage.push_back(0);
+  */
 };
 
 Instrument::~Instrument(){
@@ -49,7 +50,7 @@ int Instrument::scaleSize() {
   return (int)_generator.scale().size();
 }
 
-void Instrument::play(std::function<std::vector<int>(void)> f) {
+void Instrument::playbar(std::function<Notes(void)> f) {
   std::thread t([&](){
     while (true) {
       if (stepTimer.bar_start()) {
@@ -61,7 +62,7 @@ void Instrument::play(std::function<std::vector<int>(void)> f) {
   t.detach();
 }
 
-void Instrument::playasap(std::function<std::vector<int>(void)> f) {
+void Instrument::play(std::function<Notes(void)> f) {
   _generator.f(f);
 }
 
@@ -90,35 +91,36 @@ void Instrument::playIt() {
     playing = true;
     _startTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
     
-    // note off
-    noteMessage[0] = 128+ch ;
-    noteMessage[1] = n.note;
-    noteMessage[2] = 0;
-    midiout->sendMessage(&noteMessage);
+    // Notes off
+    for (auto& pitch : n.notes) {
+      noteMessage[0] = 128+ch ;
+      noteMessage[1] = pitch;
+      noteMessage[2] = 0;
+      midiout->sendMessage(&noteMessage);
+    }
     
-    n = _generator.note();
-
-    // note on
-    noteMessage[0] = 144+ch;
-    noteMessage[1] = n.note;
-    noteMessage[2] = isMuted == true ? 0 : n.vel;
+    n = _generator.notes();
+    
+    for (auto& pitch : n.notes) {
+      noteMessage[0] = 144+ch;
+      noteMessage[1] = pitch;
+      noteMessage[2] = isMuted == true ? 0 : n.amp;
+      midiout->sendMessage(&noteMessage);
+    }
     
     // cc
-    for (auto &cc : _generator.ccVct) {
+    /*for (auto &cc : _generator.ccVct) {
      _ccCompute = _generator.midicc(cc);
      ccMessage[0] = 176+ch;
      ccMessage[1] = _ccCompute[0];
      ccMessage[2] = _ccCompute[1];
      midiout->sendMessage(&ccMessage);
-    }
-    
-    midiout->sendMessage(&noteMessage);
+    }*/
     
     _elapsedTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
 
     std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));
 
-    Expression::step = _step++;
     playing = false;
   });
   t.detach();

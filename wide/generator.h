@@ -12,12 +12,26 @@
 #include <unordered_map>
 #include <queue>
 
-#define SILENCE [](){return std::vector<int> {0,0,4,1};} // silent note
+#define SILENCE []()->Notes{return {{0},0,4,1};} // silent Notes
+
+using noteDur = std::pair<int,float>;
+
+struct Notes {
+  std::vector<int> notes;
+  float amp;
+  unsigned long dur; // nanoseconds
+  int oct;
+};
+
+struct cc_t {
+  int ch;
+  std::function<int(void)> f;
+};
 
 class StepTimer {
 public:
   unsigned int step; // increment's resolution; set as 1/200
-  unsigned long playhead; // global step sequencer's counter; each increment <=> 1/4 note
+  unsigned long playhead; // global step sequencer's counter; each increment <=> 1/4 Notes
   
   bool beat_end() {
     if (step == endStep-stepOffset)
@@ -44,21 +58,7 @@ private:
 
 extern StepTimer stepTimer;
 
-using noteDur = std::pair<int,float>;
-
 const int QUEUE_SIZE = 10;
-
-struct note_t {
-  int note;
-  int vel;
-  unsigned int dur; // nanoseconds
-  int oct;
-};
-
-struct cc_t {
-  int ch;
-  std::function<int(void)> f;
-};
 
 class Generator {
 public:
@@ -68,17 +68,19 @@ public:
   //void queuecc();
   void bpm(int bpm);
   int bpm();
-  note_t midiNote(const std::function<std::vector<int>(void)>& f);
-  note_t note();
-  note_t note(std::function<note_t(void)>& f);
+  Notes midiNote(const std::function<Notes(void)>& f);
+  Notes notes();
+  Notes notes(std::function<Notes(void)>& f);
   std::vector<int> midicc(cc_t _cc);
   void cc(std::vector<cc_t>& ccs);
   void scale(std::vector<int>scale);
   std::vector<int> scale();
-  void f(std::function<std::vector<int>(void)> f);
-  int ampToVel(double amp);
+  void f(std::function<Notes(void)> f);
+  int ampToVel(float amp);
   
-  std::queue<note_t> notesQueue;
+  unsigned long int step = 0; // +1 for each Notes played
+  
+  std::queue<Notes> notesQueue;
   //std::queue<cc_t> ccQueue;
   
   // milliseconds
@@ -94,5 +96,5 @@ private:
   
   int _bpm = 60;
   std::vector<int> _scale {0,2,4,5,7,9,11}; //Major scale
-  std::function<std::vector<int>(void)> _f = SILENCE;
+  std::function<Notes(void)> _f = SILENCE;
 };
