@@ -58,7 +58,7 @@ std::vector<int> rotR(vector<int>& notes) {
 
 std::vector<int> rotL(vector<int>& notes) {
   transform(notes.begin(),notes.end(),notes.begin(),[](int note){
-    note += 1;
+    note -= 1;
     
     if (note > 12)
       note = 0;
