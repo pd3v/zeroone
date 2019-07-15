@@ -33,6 +33,13 @@ const T rndBunch(const vector<T> bunch) {
 }
 
 template <typename T>
+const vector<T> scramble(vector<T> n) {
+  random_shuffle(n.begin(),n.end());
+  
+  return n;
+}
+
+template <typename T>
 const T range(const T& value,const T& max,const T& toMin,const T& toMax) {
   return value/max*(toMax-toMin)+toMin;
 }
@@ -58,9 +65,7 @@ std::vector<int> rotR(vector<int>& notes) {
 
 std::vector<int> rotL(vector<int>& notes) {
   transform(notes.begin(),notes.end(),notes.begin(),[](int note){
-    note += 1;
-    //note %= 12;
-    //note -= 12;
+    note -= 1;
     
     if (note > 12)
       note = 0;
@@ -74,13 +79,12 @@ std::vector<int> rotL(vector<int>& notes) {
 }
 
 // ====================================
-// Scales
 
+// Scales
 scaleType Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
 scaleType Major      {0,2,4,5,7,9,11};
 scaleType Minor      {0,2,3,5,7,9,11};
 
 //Chords
-
 chordType Maj  {0,2,4};
 chordType Min  {0,1,4};
