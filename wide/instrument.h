@@ -12,6 +12,7 @@
 #include <thread>
 #include <RtMidi.h>
 #include "generator.h"
+#include <future>
 #include "texpression.h"
 
 class Instrument {
@@ -30,6 +31,7 @@ public:
   void cc(); // cleans cc - same result as "nocc" directive
   void mute();
   void unmute();
+  unsigned long step();
 
   std::thread instThread;
   std::string id;
@@ -38,9 +40,10 @@ public:
   std::vector<unsigned char> noteMessage;
   std::vector<unsigned char> ccMessage;
   bool isMuted = false;
-  bool solo = false;
+  bool isSolo = false;
   bool playing = false;
   Notes n = {{0},0,4,1}; // Initial Notes
+  std::vector<int> metaNotes{0};
   TExpression express;
   
 private:
@@ -50,4 +53,6 @@ private:
   cc_t _cc; // struct with channel and function
   std::vector<int> _ccCompute;
   std::function<Notes(void)> _f;
+  std::future<void> _future;
+  
 };

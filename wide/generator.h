@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <functional>
+#include <algorithm>
 #include <unordered_map>
 #include <queue>
 
@@ -21,6 +22,16 @@ struct Notes {
   float amp;
   unsigned long dur; // nanoseconds
   int oct;
+  
+  void print() {
+    std::cout << "{";
+    for_each(notes.begin(),notes.end(),[](int n){std::cout << n << " ";});
+    std::cout << "} ";
+    std::cout << amp << " ";
+    std::cout << dur << " ";
+    std::cout << oct << " ";
+    std::cout << std::endl;
+  }
 };
 
 struct cc_t {
@@ -79,7 +90,7 @@ public:
   int ampToVel(float amp);
   
   unsigned long int step = 0; // +1 for each Notes played
-  
+  std::vector<int> metaNotes;
   std::queue<Notes> notesQueue;
   //std::queue<cc_t> ccQueue;
   

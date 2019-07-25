@@ -50,11 +50,16 @@ int Instrument::scaleSize() {
   return (int)_generator.scale().size();
 }
 
+unsigned long Instrument::step() {
+  return _generator.step;
+}
+
 void Instrument::playbar(std::function<Notes(void)> f) {
   std::thread t([&](){
     while (true) {
       if (stepTimer.bar_start()) {
         _generator.f(f);
+        metaNotes = _generator.metaNotes; // notes before octaves calculus
         break;
       }
     }
@@ -64,6 +69,7 @@ void Instrument::playbar(std::function<Notes(void)> f) {
 
 void Instrument::play(std::function<Notes(void)> f) {
   _generator.f(f);
+  metaNotes = _generator.metaNotes;
 }
 
 void Instrument::cc(std::vector<cc_t> ccs) {
@@ -87,8 +93,10 @@ void Instrument::unmute() {
 }
 
 void Instrument::playIt() {
-  std::thread t([&](){
+  //std::thread t([&](){
+  _future = std::async(std::launch::async,[&](){
     playing = true;
+    
     _startTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
     
     // Notes off
@@ -120,8 +128,8 @@ void Instrument::playIt() {
     _elapsedTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
 
     std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));
-
+    
     playing = false;
   });
-  t.detach();
+  //t.detach();
 }

@@ -5,7 +5,6 @@
 //
 
 #include "sequencer.h"
-#include <stdio.h>
 #include <iostream>
 #include <thread>
 #include <pthread.h>
@@ -22,6 +21,8 @@
 #define i(x) (*insts[std::to_string(x)])
 //#define n(n,v,d,o) [&](){return std::vector<float>{n,v,d,o};} // monophonic
 #define n(c,v,d,o) [&]()->Notes {return (Notes){(std::vector<int>c),v,d,o};} // polyphonic
+#define inotes(x) i(x).metaNotes
+#define iscale(x) i(x).scale()
 #define e(x) i(x).express // alias to time dependent helper functions..not good
 #define ccin(ch,func) (cc_t){ch,[](){return func;}}
 #define ccins(vct) std::vector<cc_t>vct

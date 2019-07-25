@@ -10,6 +10,8 @@
 #include <thread>
 
 #include <iostream>
+#include <utility>
+#include <algorithm>
 
 Generator::Generator() {
   notesQueue.emplace((Notes){{0},0,4,1});
@@ -49,6 +51,7 @@ Notes Generator::notes() {
   if (!notesQueue.empty()) {
     notes = notesQueue.front();
     notesQueue.pop();
+    ++step;
   }
   
   return notes;
@@ -80,12 +83,11 @@ void Generator::f(std::function<Notes(void)> f) {
 
 Notes Generator::midiNote(const std::function<Notes(void)>& f) {
   Notes notes = f();
-  int i = 0;
   
-  for (auto& n : notes.notes) {
-    notes.notes[i] = (int) _scale[n]+12*notes.oct;
-    i++;
-  }
+  metaNotes = notes.notes;
+  transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
+    return notes.oct*12+_scale[n%12];
+  });
   
   notes.amp = ampToVel(notes.amp);
   notes.dur = (duration[static_cast<int>(notes.dur)]/(_bpm/60.0));
