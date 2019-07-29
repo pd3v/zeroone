@@ -29,6 +29,7 @@ Instrument::Instrument(std::string _id, int _ch)
 };
 
 Instrument::~Instrument(){
+  //_generator.queueRun = false;
   std::cout << "instrument " << id << " quit." << std::endl;
   noteMessage[0] = 128+ch;
   midiout->sendMessage(&noteMessage);
@@ -117,14 +118,14 @@ void Instrument::playIt() {
     }
     
     // cc
-    /*for (auto &cc : _generator.ccVct) {
+    for (auto &cc : _generator.ccVct) {
      _ccCompute = _generator.midicc(cc);
      ccMessage[0] = 176+ch;
      ccMessage[1] = _ccCompute[0];
      ccMessage[2] = _ccCompute[1];
      midiout->sendMessage(&ccMessage);
-    }*/
-    
+    }
+   
     _elapsedTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
 
     std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));

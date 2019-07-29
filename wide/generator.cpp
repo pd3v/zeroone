@@ -8,8 +8,6 @@
 #include <vector>
 #include <queue>
 #include <thread>
-
-#include <iostream>
 #include <utility>
 #include <algorithm>
 
@@ -18,13 +16,17 @@ Generator::Generator() {
   queueNote();
 }
 
-Generator::~Generator() {};
+Generator::~Generator() {
+  _queueRun = false;
+};
 
 void Generator::queueNote() {
   std::thread t([&](){
-    while(true) {
-      if (notesQueue.size() < QUEUE_SIZE || notesQueue.empty())
+    while(_queueRun) {
+      if (notesQueue.size() < QUEUE_SIZE || notesQueue.empty()) {
         notesQueue.push(midiNote(_f));
+        ++step;
+      }
       
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
@@ -51,7 +53,7 @@ Notes Generator::notes() {
   if (!notesQueue.empty()) {
     notes = notesQueue.front();
     notesQueue.pop();
-    ++step;
+    //++step;
   }
   
   return notes;
