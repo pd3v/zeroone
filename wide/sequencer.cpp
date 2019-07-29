@@ -28,7 +28,6 @@
 #define ccins(vct) std::vector<cc_t>vct
 #define nocc std::vector<cc_t>{}
 
-//using instrumentsMap = std::unordered_map<std::string, Instrument*>;
 using instrumentsMap = std::unordered_map<std::string, std::unique_ptr<Instrument>>;
 
 const int NUM_INST = 5;
@@ -90,12 +89,6 @@ int main() {
 }
 
 void newinst(std::string id, int ch) {
-  /*Instrument* inst = new Instrument(id, ch);
-  insts.insert(std::pair<std::string,Instrument*>(id,inst));*/
-  
-  //std::unique_ptr<Instrument> inst(new Instrument(id, ch));
-  //auto inst(std::make_unique<Instrument>Instrument(id,ch));
-  
   insts.insert(std::pair<std::string,std::unique_ptr<Instrument>>(id, static_cast<std::unique_ptr<Instrument>>(new Instrument(id, ch))));
 }
 
@@ -131,26 +124,12 @@ void lst() {
 void quit(int instId) {;
   instrumentsMap::const_iterator itr = insts.find(std::to_string(instId));
   if (itr != insts.end()) {
-    //delete itr->second;
     insts.erase(itr);
   }
 }
 
 void quit() {
-  //std::vector<std::string> c {"0","1","2","3"};
-  for(auto& inst : insts) {
-    
-    //delete inst.second;
-    
-    //inst.second = static_cast<Instrument>(nullptr);
-    //quit((int)static_cast<char>(inst.first));
-    instrumentsMap::const_iterator itr = insts.find(inst.first);
-    if (itr != insts.end()) {
-      //delete itr->second;
-      insts.erase(itr);
-    }
-  }
-  //insts.clear();
+  insts.erase(insts.begin(), insts.end());
 }
 
 void scale(Instrument* i, std::vector<int>scale) {
