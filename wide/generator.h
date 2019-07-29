@@ -106,6 +106,7 @@ private:
   void clearNotesQueue();
   
   int _bpm = 60;
+  bool _queueRun = true;
   std::vector<int> _scale {0,2,4,5,7,9,11}; //Major scale
   std::function<Notes(void)> _f = SILENCE;
 };

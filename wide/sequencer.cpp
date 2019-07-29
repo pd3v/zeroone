@@ -28,13 +28,15 @@
 #define ccins(vct) std::vector<cc_t>vct
 #define nocc std::vector<cc_t>{}
 
-using instrumentsMap = std::unordered_map<std::string, Instrument*>;
+//using instrumentsMap = std::unordered_map<std::string, Instrument*>;
+using instrumentsMap = std::unordered_map<std::string, std::unique_ptr<Instrument>>;
 
-const int NUM_INST = 1;
+const int NUM_INST = 5;
 
 std::thread seqThread;
 pthread_t seqThreadHandle;
 instrumentsMap insts;
+bool seqRun = true;
 
 StepTimer stepTimer;
 const long _refBeatDur = 1000000000; //nanoseconds <=> 1000 milliseconds
@@ -48,14 +50,14 @@ using namespace std::chrono;
 void stepSequencer() {
   unsigned long startTime, elapsedTime;
   
-  while(true) {
+  while(seqRun) {
     for (int i = 0;i < _beatDivision;i++) {
       startTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
       
       stepTimer.step = i%_beatDivision+1;
       stepTimer.playhead += (i%_beatDivision) == 0 ? 1 : 0;
     
-      for(auto &inst : insts) {
+      for (auto &inst : insts) {
         if (!inst.second->playing)
           inst.second->playIt();
       }
@@ -88,8 +90,13 @@ int main() {
 }
 
 void newinst(std::string id, int ch) {
-  Instrument* inst = new Instrument(id, ch);
-  insts.insert(std::pair<std::string,Instrument*>(id,inst));
+  /*Instrument* inst = new Instrument(id, ch);
+  insts.insert(std::pair<std::string,Instrument*>(id,inst));*/
+  
+  //std::unique_ptr<Instrument> inst(new Instrument(id, ch));
+  //auto inst(std::make_unique<Instrument>Instrument(id,ch));
+  
+  insts.insert(std::pair<std::string,std::unique_ptr<Instrument>>(id, static_cast<std::unique_ptr<Instrument>>(new Instrument(id, ch))));
 }
 
 void newinsts(std::vector<int> instsIds) {
@@ -124,16 +131,26 @@ void lst() {
 void quit(int instId) {;
   instrumentsMap::const_iterator itr = insts.find(std::to_string(instId));
   if (itr != insts.end()) {
-    delete itr->second;
+    //delete itr->second;
     insts.erase(itr);
   }
 }
 
 void quit() {
-  for(auto& inst : insts)
-    delete inst.second;
-  
-  insts.clear();
+  //std::vector<std::string> c {"0","1","2","3"};
+  for(auto& inst : insts) {
+    
+    //delete inst.second;
+    
+    //inst.second = static_cast<Instrument>(nullptr);
+    //quit((int)static_cast<char>(inst.first));
+    instrumentsMap::const_iterator itr = insts.find(inst.first);
+    if (itr != insts.end()) {
+      //delete itr->second;
+      insts.erase(itr);
+    }
+  }
+  //insts.clear();
 }
 
 void scale(Instrument* i, std::vector<int>scale) {
@@ -168,3 +185,16 @@ void unmute() {
   for (auto &inst : insts)
     inst.second->unmute();
 }
+
+void on() {
+  seqRun = true;
+  sequencer();
+}
+
+void off() {
+  quit();
+  seqRun = false;
+  seqThreadHandle = nullptr;
+  std::cout << "wide is off." << std::endl;
+}
+
