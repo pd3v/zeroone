@@ -29,7 +29,6 @@ Instrument::Instrument(std::string _id, int _ch)
 };
 
 Instrument::~Instrument(){
-  //_generator.queueRun = false;
   std::cout << "instrument " << id << " quit." << std::endl;
   noteMessage[0] = 128+ch;
   midiout->sendMessage(&noteMessage);
@@ -94,7 +93,6 @@ void Instrument::unmute() {
 }
 
 void Instrument::playIt() {
-  //std::thread t([&](){
   _future = std::async(std::launch::async,[&](){
     playing = true;
     
@@ -132,5 +130,4 @@ void Instrument::playIt() {
     
     playing = false;
   });
-  //t.detach();
 }
