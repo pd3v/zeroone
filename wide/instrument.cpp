@@ -126,7 +126,7 @@ void Instrument::playIt() {
    
     _elapsedTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
 
-    std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));
+    std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime-_THREAD_OVERHEAD)));
     
     playing = false;
   });

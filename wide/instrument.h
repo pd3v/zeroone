@@ -33,7 +33,6 @@ public:
   void unmute();
   unsigned long step();
 
-  std::thread instThread;
   std::string id;
   int ch;
   std::unique_ptr<RtMidiOut> midiout;
@@ -47,6 +46,7 @@ public:
   TExpression express;
   
 private:
+  const int _THREAD_OVERHEAD = 29000; // nanoseconds. Humm..
   Generator _generator;
   unsigned long _startTime;
   unsigned long _elapsedTime;
