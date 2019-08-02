@@ -30,8 +30,9 @@ const T rnd(const T& min,const T& max) {
     return rand()%static_cast<int>(max-min)+min;
 };
 
-const int rndBunch(const vector<int> bunch) {
-  return static_cast<int>(bunch[rand()%bunch.size()]);
+template <typename T>
+const T rndBunch(const vector<T> bunch) {
+  return static_cast<T>(bunch[rand()%bunch.size()]);
 }
 
 const unsigned long rndBunchDur(const vector<unsigned long> bunch) {
@@ -42,8 +43,8 @@ const float rndBunchAmp(const vector<float> bunch) {
   return static_cast<float>(bunch[rand()%bunch.size()]);
 }
 
-auto rndBunchNotes = rndBunch;
-auto rndBunchOct = rndBunch;
+auto rndBunchNotes = rndBunch<int>;
+auto rndBunchOct = rndBunch<int>;
 
 template <typename T>
 const vector<T> scramble(vector<T> n) {
