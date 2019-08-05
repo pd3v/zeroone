@@ -44,9 +44,9 @@ public:
   Notes n = {{0},0,4,1}; // Initial Notes
   std::vector<int> metaNotes{0};
   TExpression express;
+  short syncOffset = 0;
   
 private:
-  const int _THREAD_OVERHEAD = 29000; // nanoseconds. Humm..
   Generator _generator;
   unsigned long _startTime;
   unsigned long _elapsedTime;

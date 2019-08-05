@@ -13,6 +13,8 @@
 
 using namespace std::chrono;
 
+//short Instrument::syncOffset = 0; // microseconds
+
 Instrument::Instrument(std::string _id, int _ch)
 :id(_id), ch(_ch), midiout(std::unique_ptr<RtMidiOut>(new RtMidiOut)), _generator(Generator()) {
   midiout->openPort(0);
@@ -93,10 +95,9 @@ void Instrument::unmute() {
 }
 
 void Instrument::playIt() {
+  _startTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count()-(Instrument::syncOffset*1000);
   _future = std::async(std::launch::async,[&](){
     playing = true;
-    
-    _startTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
     
     // Notes off
     for (auto& pitch : n.notes) {
@@ -125,8 +126,8 @@ void Instrument::playIt() {
     }
    
     _elapsedTime = time_point_cast<nanoseconds>(steady_clock::now()).time_since_epoch().count();
-
-    std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime-_THREAD_OVERHEAD)));
+    
+    std::this_thread::sleep_for(nanoseconds(n.dur-(_elapsedTime-_startTime)));
     
     playing = false;
   });
