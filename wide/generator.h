@@ -11,11 +11,16 @@
 #include <functional>
 #include <algorithm>
 #include <unordered_map>
+#include <future>
+#include <mutex>
 #include <queue>
+#include <deque>
+#include <mutex>
 
 #define SILENCE []()->Notes{return {{0},0,4,1};} // silent Notes
 
 using noteDur = std::pair<int,float>;
+
 
 struct Notes {
   std::vector<int> notes;
@@ -33,6 +38,28 @@ struct Notes {
     std::cout << std::endl;
   }
 };
+
+struct Job {
+  int id;
+  std::function<Notes(void)>* job;
+};
+
+struct TaskPool {
+  std::vector<std::future<void>> tasks;
+  short numTasks;
+  std::deque<Job> jobs;
+  
+  bool isRunning = true;
+  std::mutex mtx;
+  
+  /*void stopRunning() {
+    isRunning = false;
+    
+    for (auto& t : tasks)
+      t.get();
+  }*/
+};
+
 
 struct cc_t {
   int ch;
@@ -80,18 +107,27 @@ public:
   void bpm(int bpm);
   int bpm();
   Notes midiNote(const std::function<Notes(void)>& f);
+  static void initPatterns();
   Notes notes();
+//  Notes notesTskPool();
   Notes notes(std::function<Notes(void)>& f);
   std::vector<int> midicc(cc_t _cc);
   void cc(std::vector<cc_t>& ccs);
   void scale(std::vector<int>scale);
   std::vector<int> scale();
-  void f(std::function<Notes(void)> f);
+  void f(std::string instId,std::function<Notes(void)> f);
   int ampToVel(float amp);
   
+  static void pushJob();
+  int popJob();
+  void printNotes(Notes n);
+
   unsigned long int step = 0; // +1 for each Notes played
   std::vector<int> metaNotes;
   std::queue<Notes> notesQueue;
+
+  static std::shared_ptr<std::vector<std::function<Notes(void)>>> patterns;
+  static TaskPool tskPool;
   //std::queue<cc_t> ccQueue;
   
   // milliseconds

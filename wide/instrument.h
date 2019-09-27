@@ -27,6 +27,7 @@ public:
   void playbar(std::function<Notes(void)> f);
   void play(std::function<Notes(void)> f);
   void playIt();
+  void playIt(TaskPool& tp);
   void cc(std::vector<cc_t> ccs);
   void cc(); // cleans cc - same result as "nocc" directive
   void mute();
