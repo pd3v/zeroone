@@ -16,14 +16,10 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish API for live codin
 
 ##### 1. run cling in terminal
 ##### 2. at cling prompt load *wide* by typing the following lines:
-	.x <path to>texpression.h
-	.x <path to>texpression.cpp
-	.x <path to>instrument.h
-	.x <path to>instrument.cpp
-	.x <path to>generator.h
-	.x <path to>generator.cpp
-	.x <path to>sequencer.cpp
-#### 3. after message "wide is on..." appears, type:
+	
+	.x <path to>wide.cpp
+	
+#### 3. after message "wide is on <((()))>" appears, type:
 	
 `i(0).play(n(({0,2,4}),0.9,4,4)) // Instrument "0" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`
 
