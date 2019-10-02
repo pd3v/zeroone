@@ -1,9 +1,5 @@
-set (CMAKE_CXX_STANDARD 11)
+cmake_minimum_required(VERSION 3.11)
 
-# Create wide’s static library
-ADD_LIBRARY( wide STATIC
-sequencer.cpp
-instrument.cpp
-generator.cpp
-expression.cpp
-)
+project(wide VERSION 1.1.0)
+
+add_executable(wide wide.cpp)
