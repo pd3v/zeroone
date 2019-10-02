@@ -15,7 +15,7 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish API for live codin
 ### How to use it
 
 ##### 1. run cling in terminal
-##### 2. at cling prompt load *wide* by typing the following lines:
+##### 2. at cling prompt load *wide* by typing the following line:
 	
 	.x <path to>wide.cpp
 	
