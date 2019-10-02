@@ -230,7 +230,7 @@ int Generator::bpm = BPM_REF;
 
 unordered_map<int,unsigned long> Generator::duration {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
 
-void line() {
+void wide() {
   if (tskPool.isRunning) {
     thread th = std::thread([&](){
       tskPool.numTasks = NUM_TASKS;
