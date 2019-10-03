@@ -27,11 +27,17 @@
 
 using namespace std;
 
-using noteDur = std::pair<int,float>;
+using noteDur = pair<int,float>;
+using scaleType = vector<int>;
+using chordType = vector<int>;
 
 const short NUM_TASKS = 4;
 const unsigned int BAR_DUR_REF = 4000000; //microseconds
 const unsigned int BPM_REF = 60;
+
+scaleType scale{0,1,2,3,4,5,6,7,8,9,10,11}; // Chromatic scale
+// vector<int> scale{0,2,4,5,7,9,11}; // Major scale
+chordType Maj{0,4,7}, Min{0,3,7};
 
 struct Notes {
   std::vector<int> notes;
@@ -88,8 +94,6 @@ public:
   
   static Notes midiNote(const std::function<Notes(void)>& f) {
     Notes notes = f();
-    vector<int> scale{0,1,2,3,4,5,6,7,8,9,10,11}; // Chromatic scale
-    // vector<int> scale{0,2,4,5,7,9,11}; // Major scale
     
     transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
       return notes.oct*12+scale[n%12];
