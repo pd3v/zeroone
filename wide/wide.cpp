@@ -16,10 +16,14 @@
 #include <algorithm>
 #include "RtMidi.h"
 
-#ifdef __APPLE__
-#pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
-#elif __linux__
-#pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+#ifdef __linux__
+  #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+#elif __APPLE__
+  #if TARGET_OS_MAC
+    #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+  #endif
+#elif __unix__
+  #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
 
 #define i(x) (insts[x])
