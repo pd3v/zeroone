@@ -19,9 +19,7 @@
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #elif __APPLE__
-  #if TARGET_OS_MAC
-    #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
-  #endif
+  #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
 #elif __unix__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
