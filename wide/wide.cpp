@@ -34,12 +34,13 @@ using scaleType = vector<int>;
 using chordType = vector<int>;
 
 const short NUM_TASKS = 4;
-const unsigned int BAR_DUR_REF = 4000000; //microseconds
-const unsigned int BPM_REF = 60;
+const float BAR_DUR_REF = 4000000; //microseconds
+const float BPM_REF = 60;
 
-scaleType scale{0,1,2,3,4,5,6,7,8,9,10,11}; // Chromatic scale
-// vector<int> scale{0,2,4,5,7,9,11}; // Major scale
-chordType Maj{0,4,7}, Min{0,3,7};
+scaleType Chromatic{0,1,2,3,4,5,6,7,8,9,10,11};
+scaleType Major{0,2,4,5,7,9,11};
+scaleType Minor{0,2,3,5,7,8,10};
+chordType CMaj{0,4,7}, CMin{0,3,7}; // just for testing purposes
 
 struct Notes {
   std::vector<int> notes;
@@ -90,15 +91,11 @@ struct TaskPool {
 
 class Generator {
 public:
-  Generator() {
-    bpm = BPM_REF;
-  }
-  
   static Notes midiNote(const std::function<Notes(void)>& f) {
     Notes notes = f();
     
     transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
-      return notes.oct*12+scale[n%12];
+      return notes.oct*12+scale[n%scale.size()];
     });
     
     notes.amp = ampToVel(notes.amp);
@@ -112,12 +109,20 @@ public:
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
   
-  static int bpm;
+  static unsigned int barDur(const float _bpm) {
+    bpm = _bpm;
+    cout << bpm/BPM_REF << " " << BAR_DUR_REF/(bpm/BPM_REF) << endl;
+    return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
+  }
+  
+  static float bpm;
+  static scaleType scale;
   
 private:
   static int ampToVel(float amp) {
     return round(127*amp);
   }
+  
   
   static unordered_map<int,unsigned long> duration;// {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
 };
@@ -181,7 +186,7 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
       auto durTemp = Generator::midiNote(nFunc).dur;
       auto durTempPtr = Generator::midiNote(*j.job).dur;
       int nTimes = Generator::barDur()/durTemp;
-      
+
       for (int subn = 0;subn < nTimes;++subn) {
         startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         for (auto& pitch : n.notes) {
@@ -224,7 +229,7 @@ TaskPool tskPool;
 vector<Instrument> insts;
 
 void bpm(int _bpm) {
-  Generator::bpm = _bpm;
+  Generator::barDur(_bpm);
 }
 
 void exit() {
@@ -232,7 +237,8 @@ void exit() {
   cout << "wide is off <>" << endl;
 }
 
-int Generator::bpm = BPM_REF;
+float Generator::bpm = BPM_REF;
+scaleType Generator::scale = Major;
 
 unordered_map<int,unsigned long> Generator::duration {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
 
