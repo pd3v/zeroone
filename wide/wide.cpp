@@ -111,7 +111,6 @@ public:
   
   static unsigned int barDur(const float _bpm) {
     bpm = _bpm;
-    cout << bpm/BPM_REF << " " << BAR_DUR_REF/(bpm/BPM_REF) << endl;
     return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
   }
   
