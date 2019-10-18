@@ -182,9 +182,9 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
       tp.mtx.unlock();
       
       auto nFunc = *j.job;
-      auto durTemp = Generator::midiNote(nFunc).dur;
-      auto durTempPtr = Generator::midiNote(*j.job).dur;
-      int nTimes = Generator::barDur()/durTemp;
+      auto dur4Bar = Generator::midiNote(nFunc).dur;
+      auto dur4Step = Generator::midiNote(*j.job).dur;
+      int nTimes = Generator::barDur()/dur4Bar;
 
       for (int subn = 0;subn < nTimes;++subn) {
         startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
@@ -199,7 +199,7 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
         if (!tp.isRunning) break;
         
         // Every note param imediate change allowed except duration
-        if (durTemp != durTempPtr)
+        if (dur4Bar != dur4Step)
           n = Generator::midiNote(nFunc);
         else
           n = Generator::midiNote(*j.job);
