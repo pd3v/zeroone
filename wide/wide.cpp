@@ -15,6 +15,7 @@
 #include <mutex>
 #include <algorithm>
 #include "RtMidi.h"
+#include "expression.hpp"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
@@ -36,11 +37,6 @@ using chordType = vector<int>;
 const short NUM_TASKS = 4;
 const float BAR_DUR_REF = 4000000; //microseconds
 const float BPM_REF = 60;
-
-scaleType Chromatic{0,1,2,3,4,5,6,7,8,9,10,11};
-scaleType Major{0,2,4,5,7,9,11};
-scaleType Minor{0,2,3,5,7,8,10};
-chordType CMaj{0,4,7}, CMin{0,3,7}; // just for testing purposes
 
 struct Notes {
   std::vector<int> notes;
