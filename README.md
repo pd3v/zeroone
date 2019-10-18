@@ -25,7 +25,7 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish API for live codin
 
 the same as	
 
-`i(0).play(n((Maj),0.9,4,4)) // Instrument's scale defaults C Major scale`
+`i(0).play(n((CMaj),0.9,4,4)) // Instrument's scale defaults C Major scale`
 
 
 or
