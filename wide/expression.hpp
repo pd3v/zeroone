@@ -12,25 +12,25 @@ using namespace std;
 
 typedef vector<int> scaleType, chordType;
 
-template <typename T>
+template <typename T=int>
 const T rnd(const T& max) {
   return rand()%static_cast<int>(max);
 };
 
-template <typename T>
+template <typename T=float>
 const T range(const T& value,const T& max,const T& toMin,const T& toMax) {
   return value/max*(toMax-toMin)+toMin;
 }
 
-template <typename T>
+template <typename T=int>
 const T rnd(const T& min,const T& max) {
   if (min >= 0 && max <= 1)
-    return range(static_cast<float>(rand()%10), 10.f, min, max);
+    return range<float>(static_cast<float>(rand()%10), 10.f, min, max);
   else
     return rand()%static_cast<int>(max-min)+min;
 };
 
-template <typename T>
+template <typename T=int>
 const T rndBunch(const vector<T> bunch) {
   return static_cast<T>(bunch[rand()%bunch.size()]);
 }
@@ -43,10 +43,10 @@ const float rndBunchAmp(const vector<float> bunch) {
   return static_cast<float>(bunch[rand()%bunch.size()]);
 }
 
-auto rndBunchNotes = rndBunch<int>;
+auto rndBunchNote = rndBunch<int>;
 auto rndBunchOct = rndBunch<int>;
 
-template <typename T>
+template <typename T=int>
 const vector<T> scramble(vector<T> n) {
   random_shuffle(n.begin(),n.end());
   
@@ -74,7 +74,7 @@ int thisthat(unsigned long step, function<int()> thisFunc, function<int()> thatF
   return vect;
 }*/
 
-template <typename T>
+template <typename T=int>
 T cycle(vector<T> v, unsigned long step) {
   return v.at(step%v.size());
 }
@@ -104,17 +104,12 @@ vector<int> rotL(vector<int>& notes, vector<int> scale) {
   return notes;
 }
 
-void expression {
-  std::cout << "loaded";
-}
-
 // ====================================
 
 // Scales
 scaleType Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
 scaleType Major      {0,2,4,5,7,9,11};
-scaleType Minor      {0,2,3,5,7,9,11};
+scaleType Minor      {0,2,3,5,7,8,10};
 
 //Chords
-chordType Maj  {0,2,4};
-chordType Min  {0,1,4};
+chordType CMaj{0,4,7}, CMin{0,3,7}; // just for testing purposes
