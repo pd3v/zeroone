@@ -26,7 +26,7 @@
 #endif
 
 #define i(ch) (insts[ch])
-#define step(ch) (insts[ch].step)
+#define istep(ch) (insts[ch].step)
 #define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
 
 using namespace std;
@@ -98,7 +98,7 @@ public:
     notes.amp = ampToVel(notes.amp);
     noteDurInBar = static_cast<int>(notes.dur);
     notes.dur = duration[static_cast<int>(notes.dur)]/(bpm/BPM_REF);
-    notes.oct = (int) notes.oct;
+    notes.oct = static_cast<int>(notes.oct);
     
     return notes;
   }
