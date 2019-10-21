@@ -27,7 +27,7 @@
 
 #define i(ch) (insts[ch])
 #define step(ch) (insts[ch].step)
-#define n(c,a,d,o) [&]()->Notes {return (Notes){(vector<int>c),a,d,o};} // polyphonic
+#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
 
 using namespace std;
 
@@ -56,7 +56,7 @@ struct Notes {
   }
 };
 
-function<Notes()> SILENCE_FUNC = []()->Notes {return {(vector<int>{0}),0,4,1};};
+function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,4,1};};
 
 struct Job {
   int id;
@@ -88,8 +88,8 @@ struct TaskPool {
 
 class Generator {
 public:
-  static Notes midiNote(const std::function<Notes(void)>& f) {
-    Notes notes = f();
+  static Notes midiNote(const std::function<Notes(void)>& fn) {
+    Notes notes = fn();
     
     transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
       return notes.oct*12+scale[n%scale.size()];

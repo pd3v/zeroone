@@ -57,11 +57,13 @@ bool whenMod(int countTurn, unsigned long step) {
   return step%countTurn == 0;
 }
 
-vector<int> thisthat(unsigned long step, function<vector<int>()> thisFunc, function<vector<int>()> thatFunc, function<bool()> pred) {
-  return pred() ? thisFunc() : thatFunc();
+template <typename T=int>
+T thisthat(T thisFunc, T thatFunc, bool pred, unsigned long step) {
+  return pred ? thisFunc : thatFunc;
 }
 
-int thisthat(unsigned long step, function<int()> thisFunc, function<int()> thatFunc, function<bool()> pred) {
+template <typename T=int>
+T thisthat(function<T()> thisFunc, function<T()> thatFunc, function<bool()> pred, unsigned long step) {
   return pred() ? thisFunc() : thatFunc();
 }
 
