@@ -25,12 +25,13 @@
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
 
-#define i(x) (insts[x])
+#define i(ch) (insts[ch])
+#define step(ch) (insts[ch].step)
 #define n(c,a,d,o) [&]()->Notes {return (Notes){(vector<int>c),a,d,o};} // polyphonic
 
 using namespace std;
 
-using noteDur = pair<int,float>;
+using noteDurMs = pair<int,float>;
 using scaleType = vector<int>;
 using chordType = vector<int>;
 
@@ -95,6 +96,7 @@ public:
     });
     
     notes.amp = ampToVel(notes.amp);
+    noteDurInBar = static_cast<int>(notes.dur);
     notes.dur = duration[static_cast<int>(notes.dur)]/(bpm/BPM_REF);
     notes.oct = (int) notes.oct;
     
@@ -110,7 +112,17 @@ public:
     return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
   }
   
+  static int noteDurBar() {
+    if (noteDurInBar == 3)
+      return 12;
+    else if (noteDurInBar == 6)
+      return 24;
+    
+    return noteDurInBar;
+  }
+  
   static float bpm;
+  static int noteDurInBar;
   static scaleType scale;
   
 private:
@@ -160,11 +172,11 @@ void pushJob(TaskPool& tp,vector<Instrument>& insts) {
 
 int taskDo(TaskPool& tp,vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
-  unsigned long startTime, elapsedTime;
+  unsigned long startTime, elapsedTime, deltaTime;
   vector<unsigned char> noteMessage;
   Job j;
   Notes n;
-  
+
   midiOut.openPort(0);
   noteMessage.push_back(0);
   noteMessage.push_back(0);
@@ -172,6 +184,7 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
   
   while (tp.isRunning) {
     if (!tp.jobs.empty()) {
+      startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       tp.mtx.lock();
       j = tp.jobs.front();
       tp.jobs.pop_front();
@@ -179,23 +192,17 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
       
       auto nFunc = *j.job;
       auto dur4Bar = Generator::midiNote(nFunc).dur;
-      auto dur4Step = Generator::midiNote(*j.job).dur;
-      int nTimes = Generator::barDur()/dur4Bar;
-
-      for (int subn = 0;subn < nTimes;++subn) {
-        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        for (auto& pitch : n.notes) {
-          noteMessage[0] = 128+j.id;
-          noteMessage[1] = pitch;
-          noteMessage[2] = 0;
-          midiOut.sendMessage(&noteMessage);
-        }
-        
-        insts.at(j.id).step++;
-        if (!tp.isRunning) break;
+      int nTimes = Generator::noteDurBar();
+    
+      elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      deltaTime = elapsedTime-startTime;
+      
+      for (int i = 0;i < nTimes;++i) {
+        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
+        deltaTime = 0;
         
         // Every note param imediate change allowed except duration
-        if (dur4Bar != dur4Step)
+        if (dur4Bar != Generator::midiNote(*j.job).dur)
           n = Generator::midiNote(nFunc);
         else
           n = Generator::midiNote(*j.job);
@@ -207,8 +214,18 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
           midiOut.sendMessage(&noteMessage);
         }
         
+        insts.at(j.id).step++;
+        if (!tp.isRunning) break;
+        
         elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         this_thread::sleep_for(chrono::microseconds(n.dur-(elapsedTime-startTime)));
+        
+        for (auto& pitch : n.notes) {
+          noteMessage[0] = 128+j.id;
+          noteMessage[1] = pitch;
+          noteMessage[2] = 0;
+          midiOut.sendMessage(&noteMessage);
+        }
       }
     }
   }
@@ -234,8 +251,8 @@ void exit() {
 
 float Generator::bpm = BPM_REF;
 scaleType Generator::scale = Major;
-
-unordered_map<int,unsigned long> Generator::duration {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
+int Generator::noteDurInBar = 4;
+unordered_map<int,unsigned long> Generator::duration {noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166667),noteDurMs(32,125000),noteDurMs(64,62500)};
 
 void wide() {
   if (tskPool.isRunning) {
