@@ -53,6 +53,8 @@ const vector<T> scramble(vector<T> n) {
   return n;
 }
 
+auto scrambleDur = scramble<unsigned long>;
+
 bool whenMod(int countTurn, unsigned long step) {
   return step%countTurn == 0;
 }
