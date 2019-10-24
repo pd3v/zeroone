@@ -25,38 +25,44 @@
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
 
-#define i(ch) (insts[ch])
-#define istep(ch) (insts[ch].step)
-#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
-
 using namespace std;
 
 using noteDurMs = pair<int,float>;
 using scaleType = vector<int>;
 using chordType = vector<int>;
+using rhyhtmType = vector<unsigned long>;
+
+#define i(ch) (insts[ch])
+#define istep(ch) (insts[ch].step)
+//#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
+#define n(c,a,d,o) [&]()->Notes{return (Notes){(chordType c),a,(rhyhtmType d),o};} // polyphonic
 
 const short NUM_TASKS = 4;
-const float BAR_DUR_REF = 4000000; //microseconds
+const float BAR_DUR_REF = 4000000; // microseconds
 const float BPM_REF = 60;
 
 struct Notes {
   std::vector<int> notes;
   float amp;
-  unsigned long dur; // microseconds
+  vector<unsigned long> dur;
   int oct;
   
   void print() {
-    std::cout << "{";
+    std::cout << "{ ";
     for_each(notes.begin(),notes.end(),[](int n){std::cout << n << " ";});
-    std::cout << "} ";
+    std::cout << "}";
     std::cout << amp << " ";
-    std::cout << dur << " ";
+    std::cout << "{ ";
+    for_each(dur.begin(),dur.end(),[](int d){
+      std::cout << d << " ";
+    });
+    std::cout << "}";
     std::cout << oct << " ";
     std::cout << std::endl;
   }
 };
 
-function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,4,1};};
+function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
 
 struct Job {
   int id;
@@ -96,8 +102,16 @@ public:
     });
     
     notes.amp = ampToVel(notes.amp);
-    noteDurInBar = static_cast<int>(notes.dur);
-    notes.dur = duration[static_cast<int>(notes.dur)]/(bpm/BPM_REF);
+    
+    if (notes.dur.size() == 1) {
+      notes.dur.resize(BAR_DUR_REF/duration[static_cast<int>(notes.dur.front())]);
+      fill(notes.dur.begin(),notes.dur.end(),notes.dur.front());
+    }
+    
+    transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](unsigned long d){
+      return static_cast<unsigned long>(duration[static_cast<int>(d)]/(bpm/BPM_REF));
+    });
+    
     notes.oct = static_cast<int>(notes.oct);
     
     return notes;
@@ -107,22 +121,29 @@ public:
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
   
+  
   static unsigned int barDur(const float _bpm) {
     bpm = _bpm;
     return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
   }
   
-  static int noteDurBar() {
-    if (noteDurInBar == 3)
-      return 12;
-    else if (noteDurInBar == 6)
-      return 24;
+  static bool validateDurPattern(const std::function<Notes(void)>& fn) {
+    Notes notes = fn();
+    float accDurTotal = 0;
+    short offset = 4;
     
-    return noteDurInBar;
+    if (notes.dur.size() == 1) return true;
+    
+    for (auto& d : notes.dur)
+      accDurTotal += duration[static_cast<int>(d)]/(bpm/BPM_REF);
+      
+    if (accDurTotal >= barDur()-offset && accDurTotal <= barDur()+offset) return true;
+    
+    return false;
   }
-  
+
   static float bpm;
-  static int noteDurInBar;
+  static vector<unsigned long> durPattern;
   static scaleType scale;
   
 private:
@@ -142,12 +163,13 @@ public:
   }
   
   void play(function<Notes(void)> fn) {
-    *f = fn;
+    if (Generator::validateDurPattern(fn))
+      *f = fn;
   }
   
   int id;
   unsigned long step = 0;
-  shared_ptr<function<Notes(void)>> f = make_shared<function<Notes(void)>>([]()->Notes{return {{0},0,4,1};}); // 1/4 note silence
+  shared_ptr<function<Notes(void)>> f = make_shared<function<Notes(void)>>([]()->Notes{return {{0},0,{4,4,4,4},1};}); // 1/4 note silence
 private:
   int _ch;
 };
@@ -190,22 +212,16 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
       tp.jobs.pop_front();
       tp.mtx.unlock();
       
-      auto nFunc = *j.job;
-      auto dur4Bar = Generator::midiNote(nFunc).dur;
-      int nTimes = Generator::noteDurBar();
+      auto durationsPattern = Generator::midiNote(*j.job).dur;
     
       elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       deltaTime = elapsedTime-startTime;
       
-      for (int i = 0;i < nTimes;++i) {
+      for (auto& dur : durationsPattern) {
         startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
         deltaTime = 0;
         
-        // Every note param imediate change allowed except duration
-        if (dur4Bar != Generator::midiNote(*j.job).dur)
-          n = Generator::midiNote(nFunc);
-        else
-          n = Generator::midiNote(*j.job);
+        n = Generator::midiNote(*j.job);
         
         for (auto& pitch : n.notes) {
           noteMessage[0] = 144+j.id;
@@ -218,7 +234,7 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
         if (!tp.isRunning) break;
         
         elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        this_thread::sleep_for(chrono::microseconds(n.dur-(elapsedTime-startTime)));
+        this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
         
         for (auto& pitch : n.notes) {
           noteMessage[0] = 128+j.id;
@@ -251,7 +267,7 @@ void exit() {
 
 float Generator::bpm = BPM_REF;
 scaleType Generator::scale = Major;
-int Generator::noteDurInBar = 4;
+rhyhtmType Generator::durPattern{4};
 unordered_map<int,unsigned long> Generator::duration {noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166667),noteDurMs(32,125000),noteDurMs(64,62500)};
 
 void wide() {
