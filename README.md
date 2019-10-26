@@ -30,6 +30,6 @@ the same as
 
 or
 
-`i(0).play(n(({0}),0.5,{4,8,4,8,4},5)) // Instrument "0" sends c note to midi channel 1, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence and 5th octave`
+`i(0).play(n(({0}),0.5,({4,8,4,8,4}),5)) // Instrument "0" sends c note to midi channel 1, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence and 5th octave`
 
 
