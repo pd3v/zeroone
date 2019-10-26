@@ -109,7 +109,7 @@ public:
     }
     
     transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](unsigned long d){
-      return static_cast<unsigned long>(duration[static_cast<int>(d)]/(bpm/BPM_REF));
+      return static_cast<unsigned long>(duration[static_cast<int>(d)]);
     });
     
     notes.oct = static_cast<int>(notes.oct);
@@ -117,12 +117,15 @@ public:
     return notes;
   }
   
-  static unsigned int barDur() {
+  static std::atomic<float> bpmRatio() {
+    return {bpm/BPM_REF};
+  }
+  
+  static unsigned long barDurMs() {
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
   
-  
-  static unsigned int barDur(const float _bpm) {
+  static unsigned long barDurMs(const float _bpm) {
     bpm = _bpm;
     return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
   }
@@ -137,7 +140,7 @@ public:
     for (auto& d : notes.dur)
       accDurTotal += duration[static_cast<int>(d)]/(bpm/BPM_REF);
       
-    if (accDurTotal >= barDur()-offset && accDurTotal <= barDur()+offset) return true;
+    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset) return true;
     
     return false;
   }
@@ -228,7 +231,8 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
           n = Generator::midiNote(nFunc);
         else
           n = Generator::midiNote(*j.job);
-
+        
+        
         for (auto& pitch : n.notes) {
           noteMessage[0] = 144+j.id;
           noteMessage[1] = pitch;
@@ -238,6 +242,8 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
         
         insts.at(j.id).step++;
         if (!tp.isRunning) break;
+        
+        dur = dur/Generator::bpmRatio();
         
         elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
@@ -263,7 +269,7 @@ TaskPool tskPool;
 vector<Instrument> insts;
 
 void bpm(int _bpm) {
-  Generator::barDur(_bpm);
+  Generator::barDurMs(_bpm);
 }
 
 void exit() {
