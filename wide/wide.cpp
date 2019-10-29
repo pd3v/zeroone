@@ -130,7 +130,7 @@ public:
     return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
   }
   
-  static bool validateDurPattern(const std::function<Notes(void)>& fn) {
+  static bool isDurValid(const std::function<Notes(void)>& fn) {
     Notes notes = fn();
     float accDurTotal = 0;
     short offset = 4;
@@ -166,15 +166,29 @@ public:
   }
   
   void play(function<Notes(void)> fn) {
-    if (Generator::validateDurPattern(fn))
+    if (Generator::isDurValid(fn))
       *f = fn;
+  }
+  
+  void mute() {
+    _mute = true;
+  }
+  
+  void unmute() {
+    _mute = false;
+  }
+  
+  bool isMuted() {
+    return _mute;
   }
   
   int id;
   unsigned long step = 0;
+  
   shared_ptr<function<Notes(void)>> f = make_shared<function<Notes(void)>>([]()->Notes{return {{0},0,{4,4,4,4},1};}); // 1/4 note silence
 private:
   int _ch;
+  bool _mute = false;
 };
 
 void pushJob(TaskPool& tp,vector<Instrument>& insts) {
@@ -236,7 +250,7 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
         for (auto& pitch : n.notes) {
           noteMessage[0] = 144+j.id;
           noteMessage[1] = pitch;
-          noteMessage[2] = n.amp;
+          noteMessage[2] = insts[j.id].isMuted() == false ? n.amp : 0;
           midiOut.sendMessage(&noteMessage);
         }
         
@@ -272,13 +286,23 @@ void bpm(int _bpm) {
   Generator::barDurMs(_bpm);
 }
 
-void exit() {
+void mute() {
+  for (auto &inst : insts)
+    inst.mute();
+}
+
+void unmute() {
+  for (auto &inst : insts)
+    inst.unmute();
+}
+
+void off() {
   tskPool.stopRunning();
   cout << "wide is off <>" << endl;
 }
 
 float Generator::bpm = BPM_REF;
-scaleType Generator::scale = Major;
+scaleType Generator::scale = Chromatic;
 rhyhtmType Generator::durPattern{4};
 unordered_map<int,unsigned long> Generator::duration {noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166667),noteDurMs(32,125000),noteDurMs(64,62500)};
 
