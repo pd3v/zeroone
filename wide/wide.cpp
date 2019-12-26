@@ -30,12 +30,17 @@ using namespace std;
 using noteDurMs = pair<int,float>;
 using scaleType = vector<int>;
 using chordType = vector<int>;
-using rhyhtmType = vector<unsigned long>;
+using rhythmType = vector<unsigned long>;
 
 #define i(ch) (insts[ch])
 #define istep(ch) (insts[ch].step)
+#define f(x) [&](){return x;}
+#define ccstep(ch) (insts[ch].ccStep)
 //#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
-#define n(c,a,d,o) [&]()->Notes{return (Notes){(chordType c),a,(rhyhtmType d),o};} // polyphonic
+#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<unsigned long> d),o};} // polyphonic
+#define cc(ch,value) [&]()->CC{return (CC){ch,value};} // lambda values
+//#define ccs(_cc...) vector<function<CC()>>{(function<CC()>)_cc}
+//#define nocc vector<function<CC()>>{}
 
 const short NUM_TASKS = 4;
 const float BAR_DUR_REF = 4000000; // microseconds
@@ -51,24 +56,37 @@ struct Notes {
     std::cout << "{ ";
     for_each(notes.begin(),notes.end(),[](int n){std::cout << n << " ";});
     std::cout << "}";
-    std::cout << amp << " ";
-    std::cout << "{ ";
+    std::cout << amp << " { ";
     for_each(dur.begin(),dur.end(),[](int d){
       std::cout << d << " ";
     });
-    std::cout << "}";
-    std::cout << oct << " ";
-    std::cout << std::endl;
+    std::cout << "}" << oct << " " << endl;
   }
 };
 
 function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
 
-struct Job {
-  int id;
-  function<Notes()>* job;
+struct CC {
+  int ch;
+  int value;
+  void print() {
+    std::cout << "cc { ";
+    std::cout << ch << "," << value;
+    std::cout << "}" << std::endl;
+  }
 };
 
+struct SJob {
+  int id;
+  std::function<Notes()>* job;
+};
+
+struct CCJob {
+  int id;
+  std::vector<std::function<CC()>>* job;
+};
+
+template<typename T>
 struct TaskPool {
   TaskPool() {
     isRunning = true;
@@ -76,7 +94,7 @@ struct TaskPool {
   
   vector<future<int>> tasks;
   short numTasks;
-  deque<Job> jobs;
+  deque<T> jobs;
   
   bool isRunning;
   mutex mtx;
@@ -98,7 +116,7 @@ public:
     Notes notes = fn();
     
     transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
-      return notes.oct*12+scale[n%scale.size()];
+      return (n != REST_NOTE ? notes.oct*12+scale[n%scale.size()] : n);
     });
     
     notes.amp = ampToVel(notes.amp);
@@ -117,6 +135,15 @@ public:
     return notes;
   }
   
+  static std::vector<CC> midiCC(const vector<function<CC()>>& ccsFn) {
+    std::vector<CC> ccValues;
+    
+    for(auto& _ccFn : ccsFn)
+      ccValues.push_back(_ccFn());
+  
+    return ccValues;
+  }
+  
   static std::atomic<float> bpmRatio() {
     return {bpm/BPM_REF};
   }
@@ -126,8 +153,11 @@ public:
   }
   
   static unsigned long barDurMs(const float _bpm) {
-    bpm = _bpm;
-    return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
+    if (_bpm > 0) {
+      bpm = _bpm;
+      return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
+    }
+    return bpm;
   }
   
   static bool isDurValid(const std::function<Notes(void)>& fn) {
@@ -163,11 +193,38 @@ public:
   Instrument(int id) {
     this->id = id;
     _ch = id;
+    ccs = make_shared<std::vector<std::function<CC()>>>((std::vector<std::function<CC()>>){[&]()->CC{return (CC){127,0};}});
   }
   
   void play(function<Notes(void)> fn) {
     if (Generator::isDurValid(fn))
       *f = fn;
+  }
+  
+  /*
+  void ctrl(vector<function<CC()>> _ccs) {
+    ccs = _ccs;
+  }*/
+  
+  void ctrl(){
+    *ccs = _ccs;
+    recurCCStart = true;
+  }
+  
+  template <typename T,typename... U>
+  void ctrl(T fn1,U... fn2) {
+    if (recurCCStart) {
+      _ccs.clear();
+      recurCCStart = false;
+    }
+    
+    _ccs.push_back(fn1);
+    ctrl(fn2...);
+  }
+  
+  void noctrl() {
+    ccs->clear();
+    _ccs.clear();
   }
   
   void mute() {
@@ -183,16 +240,19 @@ public:
   }
   
   int id;
-  unsigned long step = 0;
-  
+  unsigned long step = 0, ccStep = 0;
   shared_ptr<function<Notes(void)>> f = make_shared<function<Notes(void)>>([]()->Notes{return {{0},0,{4,4,4,4},1};}); // 1/4 note silence
+  shared_ptr<vector<function<CC()>>> ccs;
+  
 private:
   int _ch;
   bool _mute = false;
+  bool recurCCStart = true;
+  vector<function<CC()>> _ccs{};
 };
 
-void pushJob(TaskPool& tp,vector<Instrument>& insts) {
-  Job j;
+void pushSJob(TaskPool<SJob>& tp,vector<Instrument>& insts) {
+  SJob j;
   int id = 0;
   
   while (tp.isRunning) {
@@ -209,11 +269,29 @@ void pushJob(TaskPool& tp,vector<Instrument>& insts) {
   }
 }
 
-int taskDo(TaskPool& tp,vector<Instrument>& insts) {
+void pushCCJob(TaskPool<CCJob>& tp,vector<Instrument>& insts) {
+  CCJob j;
+  int id = 0;
+  
+  while (tp.isRunning) {
+    if (tp.jobs.size() < 20) {
+      id = id%insts.size();
+      j.id = id;
+      j.job = &*insts.at(id).ccs;
+
+      tp.jobs.push_back(j);
+      
+      id++;
+    }
+    this_thread::sleep_for(chrono::milliseconds(5));
+  }
+}
+
+int taskDo(TaskPool<SJob>& tp,vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
   unsigned long startTime, elapsedTime, deltaTime;
   vector<unsigned char> noteMessage;
-  Job j;
+  SJob j;
   Notes n;
 
   midiOut.openPort(0);
@@ -250,7 +328,7 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
         for (auto& pitch : n.notes) {
           noteMessage[0] = 144+j.id;
           noteMessage[1] = pitch;
-          noteMessage[2] = insts[j.id].isMuted() == false ? n.amp : 0;
+          noteMessage[2] = (pitch != REST_NOTE && !insts[j.id].isMuted()) ? n.amp : 0;
           midiOut.sendMessage(&noteMessage);
         }
         
@@ -279,11 +357,63 @@ int taskDo(TaskPool& tp,vector<Instrument>& insts) {
   return j.id;
 }
 
-TaskPool tskPool;
+int ccTaskDo(TaskPool<CCJob>& tp,vector<Instrument>& insts) {
+  RtMidiOut midiOut = RtMidiOut();
+  unsigned long startTime, elapsedTime;
+  vector<unsigned char> ccMessage;
+  CCJob j;
+  vector<CC> ccComputed;
+  
+  midiOut.openPort(0);
+  ccMessage.push_back(0);
+  ccMessage.push_back(0);
+  ccMessage.push_back(0);
+  
+  while (tp.isRunning) {
+    if (!tp.jobs.empty()) {
+      startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      tp.mtx.lock();
+      j = tp.jobs.front();
+      tp.jobs.pop_front();
+      tp.mtx.unlock();
+      
+      auto ccs = *j.job;
+      ccComputed = Generator::midiCC(ccs);
+      
+      for (auto &cc : ccComputed) {
+        ccMessage[0] = 176+j.id;
+        ccMessage[1] = cc.ch;
+        ccMessage[2] = cc.value;
+        midiOut.sendMessage(&ccMessage);
+      }
+      
+      insts.at(j.id).ccStep++;
+      
+      elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime)));
+    }
+  }
+  
+  return j.id;
+}
+
+
+TaskPool<SJob> sTskPool;
+TaskPool<CCJob> ccTskPool;
 vector<Instrument> insts;
 
 void bpm(int _bpm) {
   Generator::barDurMs(_bpm);
+}
+
+float bpmext(int _bpm) {
+  bpm(_bpm);
+
+  return round((_bpm-20.f)*127/(999-20));
+}
+
+void bpm() {
+  std::cout << (int)Generator::bpm << " bpm" << endl;
 }
 
 void mute() {
@@ -296,34 +426,47 @@ void unmute() {
     inst.unmute();
 }
 
+void noctrl() {
+  for (auto &inst : insts)
+    inst.noctrl();
+}
+
 void off() {
-  tskPool.stopRunning();
-  cout << "wide is off <>" << endl;
+  sTskPool.stopRunning();
+  ccTskPool.stopRunning();
+  cout << "wide off <>" << endl;
 }
 
 float Generator::bpm = BPM_REF;
 scaleType Generator::scale = Chromatic;
-rhyhtmType Generator::durPattern{4};
-unordered_map<int,unsigned long> Generator::duration {noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166667),noteDurMs(32,125000),noteDurMs(64,62500)};
+rhythmType Generator::durPattern{4};
+unordered_map<int,unsigned long> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
 
 void wide() {
-  if (tskPool.isRunning) {
+  if (sTskPool.isRunning) {
     thread th = std::thread([&](){
-      tskPool.numTasks = NUM_TASKS;
+      sTskPool.numTasks = NUM_TASKS;
+      ccTskPool.numTasks = NUM_TASKS;
       
       // init instruments
-      for (int id = 0;id < tskPool.numTasks;++id)
+      for (int id = 0;id < sTskPool.numTasks;++id)
         insts.push_back(Instrument(id));
       
-      auto futPushJob = async(launch::async,pushJob,ref(tskPool),ref(insts));
+      auto futPushSJob = async(launch::async,pushSJob,ref(sTskPool),ref(insts));
+      auto futPushCCJob = async(launch::async,pushCCJob,ref(ccTskPool),ref(insts));
       
-      // init task pool
-      for (int i = 0;i < tskPool.numTasks;++i)
-        tskPool.tasks.push_back(async(launch::async,taskDo,ref(tskPool),ref(insts)));
+      // init sonic task pool
+      for (int i = 0;i < sTskPool.numTasks;++i)
+        sTskPool.tasks.push_back(async(launch::async,taskDo,ref(sTskPool),ref(insts)));
+      
+      // init cc task pool
+      for (int i = 0;i < ccTskPool.numTasks;++i)
+        ccTskPool.tasks.push_back(async(launch::async,ccTaskDo,ref(ccTskPool),ref(insts)));
+
     });
     th.detach();
     
-    cout << "wide is on <((()))>" << endl;
+    cout << "wide on <((()))>" << endl;
   }
 }
 

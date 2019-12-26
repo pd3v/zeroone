@@ -7,80 +7,126 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <type_traits>
 
 using namespace std;
 
-typedef vector<int> scaleType, chordType;
+extern const int REST_NOTE = 127;
+const float PI = 3.14159265;
 
-template <typename T=int>
-const T rnd(const T& max) {
-  return rand()%static_cast<int>(max);
+typedef vector<int> scale, chord;
+using amp = float;
+using dur = unsigned long;
+using label = int;
+
+template <typename T>
+const T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
+  return max != 0 ? rand()%static_cast<int>(max) : 0;
 };
 
-template <typename T=float>
-const T range(const T& value,const T& max,const T& toMin,const T& toMax) {
-  return value/max*(toMax-toMin)+toMin;
+template <typename T,typename U>
+typename std::common_type<T,U>::type range(const T& value,const T& max, const U& toMax) {
+  return max != 0 ? static_cast<float>(value)/max*toMax : 0;
 }
 
-template <typename T=int>
-const T rnd(const T& min,const T& max) {
-  if (min >= 0 && max <= 1)
-    return range<float>(static_cast<float>(rand()%10), 10.f, min, max);
-  else
-    return rand()%static_cast<int>(max-min)+min;
+template <typename T,typename U>
+typename std::common_type<T,U>::type range(const T& value,const T& max,const U& toMin,const U& toMax) {
+  return max != 0 ? static_cast<float>(value)*(toMax-toMin)/max+toMin : 0;
+}
+
+template <typename T,typename U>
+typename std::common_type<T,U>::type range(const T& value,const T& min,const T& max,const U& toMin,const U& toMax) {
+  return max != 0 ? (static_cast<float>(value)-min)*(toMax-toMin)/(max-min)+toMin : 0;
+}
+
+template <typename T>
+const float rnd(const T& max,typename enable_if<is_floating_point<T>::value,void*>::type() = nullptr) {
+  return range<T>(static_cast<T>(rand()%1000),static_cast<T>(1000),0.f,static_cast<float>(max));
+};
+
+template <typename T>
+const T rnd(const T& min,const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
+  return rand()%static_cast<T>(max-min)+min;
+};
+
+template <typename T>
+const float rnd(const T& min,const T& max,typename enable_if<is_floating_point<T>::value,void*>::type() = nullptr) {
+  return range<T>(static_cast<T>(rand()%1000),static_cast<T>(1000),static_cast<float>(min),static_cast<float>(max));
 };
 
 template <typename T=int>
-const T rndBunch(const vector<T> bunch) {
+const T rnd(vector<T> bunch) {
   return static_cast<T>(bunch[rand()%bunch.size()]);
 }
 
-const unsigned long rndBunchDur(const vector<unsigned long> bunch) {
-  return static_cast<unsigned long>(bunch[rand()%bunch.size()]);
-}
-
-const float rndBunchAmp(const vector<float> bunch) {
-  return static_cast<float>(bunch[rand()%bunch.size()]);
-}
-
-auto rndBunchNote = rndBunch<int>;
-auto rndBunchOct = rndBunch<int>;
-
 template <typename T=int>
-const vector<T> scramble(vector<T> n) {
+vector<T> scramble(vector<T> n) {
   random_shuffle(n.begin(),n.end());
   
   return n;
 }
 
-auto scrambleDur = scramble<unsigned long>;
+int mod(int countTurn, unsigned long step) {
+  return countTurn != 0 ? step%countTurn : 0;
+}
+
+// If mod is in sync with inst's own step no need to set step param
+/*function<int(unsigned long)> mod(int countTurn) {
+  return [&](unsigned long step){return countTurn != 0 ? step%countTurn : 0;};
+}*/
 
 bool whenMod(int countTurn, unsigned long step) {
-  return step%countTurn == 0;
+  return countTurn != 0 ? step%countTurn == 0 : false;
 }
 
 template <typename T=int>
-T thisthat(T thisFunc, T thatFunc, bool pred, unsigned long step) {
-  return pred ? thisFunc : thatFunc;
+T thisthat(T _this, T _that, function<bool()> pred) {
+  return pred() ? _this : _that;
 }
 
 template <typename T=int>
-T thisthat(function<T()> thisFunc, function<T()> thatFunc, function<bool()> pred, unsigned long step) {
-  return pred() ? thisFunc() : thatFunc();
+T thisthat(T _this, T _that, bool pred) {
+  return (pred == true ? _this : _that);
 }
 
-// Not viable
-/*vector<int> shuffleoct(vector<int> vect,const vector<int> octaves) {
-  transform(vect.begin(),vect.end(),vect.begin(),[&octaves](int n){
-    n = octaves[rand()%octaves.size()]*12+n;
-    return n;
-  });
-  return vect;
-}*/
+template <typename T=int>
+T cycle(T max, unsigned long step) {
+  return step%max;
+}
+
+template <typename T=int>
+T cycle(T min, T max, unsigned long step) {
+  return step%(max-min)+min;
+}
 
 template <typename T=int>
 T cycle(vector<T> v, unsigned long step) {
   return v.at(step%v.size());
+}
+
+template <typename T=int>
+T rcycle(T max, unsigned long step) {
+  return max-step%max-1;
+}
+
+template <typename T=int>
+T rcycle(T min, T max, unsigned long step) {
+  return max-(step%(max-min)+min)-1;
+}
+
+template <typename T=int>
+T rcycle(vector<T> v, unsigned long step) {
+  return v.at(v.size()-step%v.size()-1);
+}
+
+template <typename T=int>
+int slow(T value,float xtimes) {
+  return floor((static_cast<int>(value)%static_cast<int>(127*xtimes))/xtimes);
+}
+
+template <typename T=int>
+int fast(T value,float xtimes) {
+  return floor(static_cast<int>(value*xtimes)%127);
 }
 
 vector<int> rotR(vector<int>& notes, vector<int> scale) {
@@ -108,12 +154,27 @@ vector<int> rotL(vector<int>& notes, vector<int> scale) {
   return notes;
 }
 
+// Not viable
+/*vector<int> shuffleoct(vector<int> vect,const vector<int> octaves) {
+ transform(vect.begin(),vect.end(),vect.begin(),[&octaves](int n){
+ n = octaves[rand()%octaves.size()]*12+n;
+ return n;
+ });
+ return vect;
+ }*/
+
+float sine(int degrees) {
+  return fabs(sin(degrees*PI/180));
+}
+
 // ====================================
 
-// Scales
-scaleType Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
-scaleType Major      {0,2,4,5,7,9,11};
-scaleType Minor      {0,2,3,5,7,8,10};
+int x = REST_NOTE;
 
-//Chords
-chordType CMaj{0,4,7}, CMin{0,3,7}; // just for testing purposes
+// Scales
+scale Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
+scale Major      {0,2,4,5,7,9,11};
+scale Minor      {0,2,3,5,7,8,10};
+
+// Chords
+chord CMaj{0,4,7}, CMin{0,3,7}; // just for testing purposes
