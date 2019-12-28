@@ -32,10 +32,10 @@ using scaleType = vector<int>;
 using chordType = vector<int>;
 using rhythmType = vector<unsigned long>;
 
-#define i(ch) (insts[ch])
-#define istep(ch) (insts[ch].step)
+#define i(ch) (insts[ch-1])
+#define istep(ch) (insts[ch-1].step)
 #define f(x) [&](){return x;}
-#define ccstep(ch) (insts[ch].ccStep)
+#define ccstep(ch) (insts[ch-1].ccStep)
 //#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
 #define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<unsigned long> d),o};} // polyphonic
 #define cc(ch,value) [&]()->CC{return (CC){ch,value};} // lambda values
