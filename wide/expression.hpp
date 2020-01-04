@@ -17,7 +17,6 @@ const float PI = 3.14159265;
 typedef vector<int> scale, chord;
 using amp = float;
 using dur = unsigned long;
-using label = int;
 
 template <typename T>
 const T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
