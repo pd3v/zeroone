@@ -31,6 +31,7 @@ using noteDurMs = pair<int,float>;
 using scaleType = vector<int>;
 using chordType = vector<int>;
 using rhythmType = vector<unsigned long>;
+using lbl = int;
 
 #define i(ch) (insts[ch-1])
 #define istep(ch) (insts[ch-1].step)
@@ -421,6 +422,10 @@ void mute() {
     inst.mute();
 }
 
+void mute(int inst) {
+  insts[inst-1].mute();
+}
+
 void unmute() {
   for (auto &inst : insts)
     inst.unmute();
@@ -429,6 +434,11 @@ void unmute() {
 void noctrl() {
   for (auto &inst : insts)
     inst.noctrl();
+}
+
+void stop() {
+  mute();
+  noctrl();
 }
 
 void off() {
