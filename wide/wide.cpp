@@ -30,27 +30,28 @@ using namespace std;
 using noteDurMs = pair<int,float>;
 using scaleType = vector<int>;
 using chordType = vector<int>;
-using rhythmType = vector<unsigned long>;
+using rhythmType = vector<int>;
 using lbl = int;
 
 #define i(ch) (insts[ch-1])
-#define istep(ch) (insts[ch-1].step)
-#define f(x) [&](){return x;}
+#define sync insts[insts.size()-1].step // sync to metronome
+#define isync(ch) (insts[ch-1].step)
 #define ccstep(ch) (insts[ch-1].ccStep)
+#define f(x) [&](){return x;}
 //#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
-#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<unsigned long> d),o};} // polyphonic
+#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};} // polyphonic
 #define cc(ch,value) [&]()->CC{return (CC){ch,value};} // lambda values
 //#define ccs(_cc...) vector<function<CC()>>{(function<CC()>)_cc}
 //#define nocc vector<function<CC()>>{}
 
-const short NUM_TASKS = 4;
+const short NUM_TASKS = 5;
 const float BAR_DUR_REF = 4000000; // microseconds
 const float BPM_REF = 60;
 
 struct Notes {
   std::vector<int> notes;
   float amp;
-  vector<unsigned long> dur;
+  vector<int> dur;
   int oct;
   
   void print() {
@@ -127,8 +128,8 @@ public:
       fill(notes.dur.begin(),notes.dur.end(),notes.dur.front());
     }
     
-    transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](unsigned long d){
-      return static_cast<unsigned long>(duration[static_cast<int>(d)]);
+    transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](int d){
+      return static_cast<int>(duration[static_cast<int>(d)]);
     });
     
     notes.oct = static_cast<int>(notes.oct);
@@ -149,11 +150,11 @@ public:
     return {bpm/BPM_REF};
   }
   
-  static unsigned long barDurMs() {
+  static int barDurMs() {
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
   
-  static unsigned long barDurMs(const float _bpm) {
+  static int barDurMs(const float _bpm) {
     if (_bpm > 0) {
       bpm = _bpm;
       return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
@@ -177,7 +178,7 @@ public:
   }
 
   static float bpm;
-  static vector<unsigned long> durPattern;
+  static vector<int> durPattern;
   static scaleType scale;
   
 private:
@@ -186,7 +187,7 @@ private:
   }
   
   
-  static unordered_map<int,unsigned long> duration;// {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
+  static unordered_map<int,int> duration;// {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
 };
 
 class Instrument {
@@ -317,7 +318,6 @@ int taskDo(TaskPool<SJob>& tp,vector<Instrument>& insts) {
       
       for (auto& dur : durationsPattern) {
         startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
-        deltaTime = 0;
         
         // Every note param imediate change allowed except duration
         if (dur4Bar != Generator::midiNote(*j.job).dur)
@@ -340,13 +340,16 @@ int taskDo(TaskPool<SJob>& tp,vector<Instrument>& insts) {
         
         elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
-        
+      
+        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         for (auto& pitch : n.notes) {
           noteMessage[0] = 128+j.id;
           noteMessage[1] = pitch;
           noteMessage[2] = 0;
           midiOut.sendMessage(&noteMessage);
         }
+        elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        deltaTime = elapsedTime-startTime;
       }
     }
   }
@@ -407,14 +410,18 @@ void bpm(int _bpm) {
   Generator::barDurMs(_bpm);
 }
 
-float bpmext(int _bpm) {
-  bpm(_bpm);
-
-  return round((_bpm-20.f)*127/(999-20));
-}
-
 void bpm() {
   std::cout << (int)Generator::bpm << " bpm" << endl;
+}
+
+// metro is alias to an instrument automatically added last and set to 1/4 notes beat by default
+unsigned long metro(int d) {
+  insts.at(insts.size()-1).play(n({0},0,{d},1));
+  return insts.at(insts.size()-1).step;
+}
+
+unsigned long metro() {
+  return insts.at(insts.size()-1).step;
 }
 
 void mute() {
@@ -450,13 +457,16 @@ void off() {
 float Generator::bpm = BPM_REF;
 scaleType Generator::scale = Chromatic;
 rhythmType Generator::durPattern{4};
-unordered_map<int,unsigned long> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
+//unordered_map<int,unsigned long> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
+
+unordered_map<int,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
+
 
 void wide() {
   if (sTskPool.isRunning) {
     thread th = std::thread([&](){
-      sTskPool.numTasks = NUM_TASKS;
-      ccTskPool.numTasks = NUM_TASKS;
+      sTskPool.numTasks = NUM_TASKS+1; // +1 is metronome
+      ccTskPool.numTasks = NUM_TASKS+1;
       
       // init instruments
       for (int id = 0;id < sTskPool.numTasks;++id)

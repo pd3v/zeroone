@@ -14,9 +14,9 @@ using namespace std;
 extern const int REST_NOTE = 127;
 const float PI = 3.14159265;
 
-typedef vector<int> scale, chord;
+typedef vector<int> scale, chord, note;
 using amp = float;
-using dur = unsigned long;
+using dur = int;
 
 template <typename T>
 const T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
@@ -45,7 +45,7 @@ const float rnd(const T& max,typename enable_if<is_floating_point<T>::value,void
 
 template <typename T>
 const T rnd(const T& min,const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
-  return rand()%static_cast<T>(max-min)+min;
+  return max != 0 ? rand()%static_cast<T>(max-min)+min : 0;
 };
 
 template <typename T>
@@ -90,12 +90,12 @@ T thisthat(T _this, T _that, bool pred) {
 
 template <typename T=int>
 T cycle(T max, unsigned long step) {
-  return step%max;
+  return max != 0 ? step%max : 0;
 }
 
 template <typename T=int>
 T cycle(T min, T max, unsigned long step) {
-  return step%(max-min)+min;
+  return (max != 0 && max-min != 0) ? step%(max-min)+min : 0;
 }
 
 template <typename T=int>
@@ -110,12 +110,33 @@ T rcycle(T max, unsigned long step) {
 
 template <typename T=int>
 T rcycle(T min, T max, unsigned long step) {
-  return max-(step%(max-min)+min)-1;
+  return max-(step%(max-min-1));
 }
 
 template <typename T=int>
 T rcycle(vector<T> v, unsigned long step) {
   return v.at(v.size()-step%v.size()-1);
+}
+
+template <typename T=int>
+T edger(T min,T max,unsigned long step) {
+  T avg = (max-min)/2;
+  return step%2 == 0 ? cycle(min,avg,step) : rcycle(avg,max,step);
+}
+
+template <typename T=int>
+T edgerx(T min,T max,unsigned long step) {
+  return step%2 == 0 ? cycle(min,max,step) : rcycle(min,max,step);
+}
+
+template <typename T=int>
+T swarm(T value,T spread,unsigned long step) {
+  int sign = rnd(0,2);
+  return sign == 0 ? value-rnd(0,spread) : value+rnd(0,spread);
+}
+
+int chop(int parts,int size=127) {
+  return size/parts;
 }
 
 template <typename T=int>
