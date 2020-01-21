@@ -174,6 +174,18 @@ vector<int> rotL(vector<int>& notes, vector<int> scale) {
   return notes;
 }
 
+template <typename T,typename U=int>
+T insync(U fn,unsigned long step) {
+  static unsigned long prevStep;
+  static T lastResult;
+  
+  if (prevStep != step) {
+    lastResult = static_cast<T>(fn);
+    prevStep = step;
+  }
+  return lastResult;
+}
+
 // Not viable
 /*vector<int> shuffleoct(vector<int> vect,const vector<int> octaves) {
  transform(vect.begin(),vect.end(),vect.begin(),[&octaves](int n){
