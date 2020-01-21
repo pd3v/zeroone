@@ -7,9 +7,9 @@
 
 . **ccStep**, for synchronizing possibilities
 
-. **x**, stands for rest notes
-
 . **noctrl**, to remove all MIDI CC from each and every instrument
+
+. **x**, stands for rest note
 
 __
 
@@ -19,8 +19,8 @@ __
 
 . Improved sync
 
-. New helper functions - **edger**, **edgerx**, **swarm**, **chop**
+. New helper functions - **edger**, **edgerx**, **swarm**, **chop** and **insync**
 
-. Instruments +1 to work as a metronome, alias **sync**
+. Instruments +1 to work as a metronome (metro()), alias **sync**
 
 . Rename **istep** to **isync**
