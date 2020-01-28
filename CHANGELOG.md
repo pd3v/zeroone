@@ -19,8 +19,10 @@ __
 
 . Improved sync
 
-. New helper functions - **edger**, **edgerx**, **swarm**, **chop** and **insync**
+. Short-typed note duration pattern; eg. short-typed {4,3,6,8} parses into {4,3,3,3,6,6,6,6,6,6,8,8}
+
+. New helper functions - **edger**, **edgerx**, **swarm**, **chop**, **insync** and **bounce**
 
 . Instruments +1 to work as a metronome (metro()), alias **sync**
 
-. Rename **istep** to **isync**
+. Rename **istep** to **isync**, **ccstep** to **ccsync**, **whenMod** to **when**
