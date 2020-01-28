@@ -14,6 +14,7 @@
 #include <chrono>
 #include <mutex>
 #include <algorithm>
+#include <math.h>
 #include "RtMidi.h"
 #include "expression.hpp"
 
@@ -36,7 +37,7 @@ using lbl = int;
 #define i(ch) (insts[ch-1])
 #define sync insts[insts.size()-1].step // sync to metronome
 #define isync(ch) (insts[ch-1].step)
-#define ccstep(ch) (insts[ch-1].ccStep)
+#define ccsync(ch) (insts[ch-1].ccStep)
 #define f(x) [&](){return x;}
 //#define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int>c),a,d,o};} // polyphonic
 #define n(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};} // polyphonic
@@ -114,6 +115,7 @@ struct TaskPool {
 
 class Generator {
 public:
+  
   static Notes midiNote(const std::function<Notes(void)>& fn) {
     Notes notes = fn();
     
@@ -122,14 +124,10 @@ public:
     });
     
     notes.amp = ampToVel(notes.amp);
-    
-    if (notes.dur.size() == 1) {
-      notes.dur.resize(BAR_DUR_REF/duration[static_cast<int>(notes.dur.front())]);
-      fill(notes.dur.begin(),notes.dur.end(),notes.dur.front());
-    }
+    notes.dur = parseDurPattern(fn);
     
     transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](int d){
-      return static_cast<int>(duration[static_cast<int>(d)]);
+      return static_cast<int>(duration[d]);
     });
     
     notes.oct = static_cast<int>(notes.oct);
@@ -162,21 +160,48 @@ public:
     return bpm;
   }
   
-  static bool isDurValid(const std::function<Notes(void)>& fn) {
+  static vector<int> parseDurPattern(const std::function<Notes(void)>& fn) {
     Notes notes = fn();
     float accDurTotal = 0;
-    short offset = 4;
+    short offset = 5;
+    vector<int> tempDur;
     
-    if (notes.dur.size() == 1) return true;
+    if (notes.dur.size() == 1) {
+      notes.dur.resize(BAR_DUR_REF/duration[(notes.dur.front())]);
+      fill(notes.dur.begin(),notes.dur.end(),notes.dur.front());
+      notes.print();
+      return notes.dur;
+    }
     
-    for (auto& d : notes.dur)
-      accDurTotal += duration[static_cast<int>(d)]/(bpm/BPM_REF);
+    // --- All time figures explicit
+    for (int d : notes.dur)
+      accDurTotal += duration[d]/(bpm/BPM_REF);
+    
+    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset) {
+      cout << "explicit "; notes.print(); //TODO: testing line
+      return notes.dur;
+    }
+    // ---
+    
+    accDurTotal = 0;
+    // --- Short-typed note duration pattern. Eg. short-typed {4,3,6,16} parses into {4,3,3,3,6,6,6,6,6,6,16,16,16,16}
+    for (int d : notes.dur) {
+      auto numDurFigure = (d < 3 ? static_cast<int>(ceil(static_cast<double>(duration[4])/duration[d])) : duration[4]/duration[d]);
       
-    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset) return true;
+      for (int i = 0;i < numDurFigure; ++i)
+        tempDur.push_back(d);
+    }
     
-    return false;
-  }
+    for (int d : tempDur)
+      accDurTotal += duration[d]/(bpm/BPM_REF);
 
+    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset)
+      return tempDur;
+    // ---
+    
+    return {};
+  }
+  
   static float bpm;
   static vector<int> durPattern;
   static scaleType scale;
@@ -186,8 +211,8 @@ private:
     return round(127*amp);
   }
   
-  
-  static unordered_map<int,int> duration;// {noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
+  static unordered_map<int,int> duration;
+  //{noteDur(1,4000000),noteDur(2,2000000),noteDur(4,1000000),noteDur(8,500000),noteDur(3,333333),noteDur(16,250000),noteDur(6,166667),noteDur(32,125000),noteDur(64,62500)};
 };
 
 class Instrument {
@@ -199,7 +224,7 @@ public:
   }
   
   void play(function<Notes(void)> fn) {
-    if (Generator::isDurValid(fn))
+    if (!Generator::parseDurPattern(fn).empty())
       *f = fn;
   }
   
@@ -466,7 +491,7 @@ void wide() {
   if (sTskPool.isRunning) {
     thread th = std::thread([&](){
       sTskPool.numTasks = NUM_TASKS+1; // +1 is metronome
-      ccTskPool.numTasks = NUM_TASKS+1;
+      ccTskPool.numTasks = NUM_TASKS;
       
       // init instruments
       for (int id = 0;id < sTskPool.numTasks;++id)

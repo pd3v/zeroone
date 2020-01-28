@@ -74,7 +74,7 @@ int mod(int countTurn, unsigned long step) {
   return [&](unsigned long step){return countTurn != 0 ? step%countTurn : 0;};
 }*/
 
-bool whenMod(int countTurn, unsigned long step) {
+bool when(int countTurn, unsigned long step) {
   return countTurn != 0 ? step%countTurn == 0 : false;
 }
 
@@ -110,7 +110,7 @@ T rcycle(T max, unsigned long step) {
 
 template <typename T=int>
 T rcycle(T min, T max, unsigned long step) {
-  return max-(step%(max-min-1));
+  return (max-1)-(step%(max-min));
 }
 
 template <typename T=int>
@@ -137,6 +137,11 @@ T swarm(T value,T spread,unsigned long step) {
 
 int chop(int parts,int size=127) {
   return size/parts;
+}
+
+template <typename T=int>
+T bounce(T min,T max,unsigned long step) {
+  return mod(max*2,step) < max ? cycle(min,max,step) : rcycle(min,max,step);
 }
 
 template <typename T=int>
@@ -172,18 +177,6 @@ vector<int> rotL(vector<int>& notes, vector<int> scale) {
   });
 
   return notes;
-}
-
-template <typename T,typename U=int>
-T insync(U fn,unsigned long step) {
-  static unsigned long prevStep;
-  static T lastResult;
-  
-  if (prevStep != step) {
-    lastResult = static_cast<T>(fn);
-    prevStep = step;
-  }
-  return lastResult;
 }
 
 // Not viable
