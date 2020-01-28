@@ -177,10 +177,8 @@ public:
     for (int d : notes.dur)
       accDurTotal += duration[d]/(bpm/BPM_REF);
     
-    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset) {
-      cout << "explicit "; notes.print(); //TODO: testing line
+    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset)
       return notes.dur;
-    }
     // ---
     
     accDurTotal = 0;
