@@ -8,6 +8,7 @@
 #include <functional>
 #include <algorithm>
 #include <type_traits>
+#include "taskpool.hpp"
 
 using namespace std;
 
@@ -18,8 +19,9 @@ typedef vector<int> scale, chord, note;
 using amp = float;
 using dur = int;
 
-template <typename T>
+template <typename T,typename U>
 const T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
+  cout << "step:" << TaskPool_<U>::step << endl;
   return max != 0 ? rand()%static_cast<int>(max) : 0;
 };
 
