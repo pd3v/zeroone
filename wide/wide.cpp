@@ -276,7 +276,8 @@ private:
   vector<function<CC()>> _ccs{};
 };
 
-void pushSJob(TaskPool<SJob>& tp,vector<Instrument>& insts) {
+/*
+//void pushSJob(TaskPool<SJob>& tp,vector<Instrument>& insts) {
   SJob j;
   int id = 0;
   
@@ -311,7 +312,46 @@ void pushCCJob(TaskPool<CCJob>& tp,vector<Instrument>& insts) {
     this_thread::sleep_for(chrono::milliseconds(5));
   }
 }
+*/
 
+void pushSJob(vector<Instrument>& insts) {
+  SJob j;
+  int id = 0;
+  
+  while (TaskPool_<SJob>::isRunning) {
+    if (TaskPool_<SJob>::jobs.size() < 20) {
+      id = id%insts.size();
+      j.id = id;
+      j.job = &*insts.at(id).f;
+      
+      TaskPool_<SJob>::jobs.push_back(j);
+      
+      id++;
+    }
+    this_thread::sleep_for(chrono::milliseconds(5));
+  }
+}
+
+void pushCCJob(vector<Instrument>& insts) {
+  CCJob j;
+  int id = 0;
+  
+  while (TaskPool_<CCJob>::isRunning) {
+    if (TaskPool_<CCJob>::jobs.size() < 20) {
+      id = id%insts.size();
+      j.id = id;
+      j.job = &*insts.at(id).ccs;
+      
+      TaskPool_<CCJob>::jobs.push_back(j);
+      
+      id++;
+    }
+    this_thread::sleep_for(chrono::milliseconds(5));
+  }
+}
+
+
+/*
 int taskDo(TaskPool<SJob>& tp,vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
   unsigned long startTime, elapsedTime, deltaTime;
@@ -384,7 +424,7 @@ int taskDo(TaskPool<SJob>& tp,vector<Instrument>& insts) {
   return j.id;
 }
 
-int ccTaskDo(TaskPool<CCJob>& tp,vector<Instrument>& insts) {
+int ccTaskDo(TaskPool_<CCJob>& tp,vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
   unsigned long startTime, elapsedTime;
   vector<unsigned char> ccMessage;
@@ -403,6 +443,121 @@ int ccTaskDo(TaskPool<CCJob>& tp,vector<Instrument>& insts) {
       j = tp.jobs.front();
       tp.jobs.pop_front();
       tp.mtx.unlock();
+      
+      auto ccs = *j.job;
+      ccComputed = Generator::midiCC(ccs);
+      
+      for (auto &cc : ccComputed) {
+        ccMessage[0] = 176+j.id;
+        ccMessage[1] = cc.ch;
+        ccMessage[2] = cc.value;
+        midiOut.sendMessage(&ccMessage);
+      }
+      
+      insts.at(j.id).ccStep++;
+      
+      elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime)));
+    }
+  }
+  
+  return j.id;
+}
+*/
+
+int taskDo(vector<Instrument>& insts) {
+  RtMidiOut midiOut = RtMidiOut();
+  unsigned long startTime, elapsedTime, deltaTime;
+  vector<unsigned char> noteMessage;
+  SJob j;
+  Notes n;
+  
+  midiOut.openPort(0);
+  noteMessage.push_back(0);
+  noteMessage.push_back(0);
+  noteMessage.push_back(0);
+  
+  while (TaskPool_<SJob>::isRunning) {
+    if (!TaskPool_<SJob>::jobs.empty()) {
+      startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      TaskPool_<SJob>::mtx.lock();
+      j = TaskPool_<SJob>::jobs.front();
+      TaskPool_<SJob>::jobs.pop_front();
+      TaskPool_<SJob>::mtx.unlock();
+      
+      TaskPool_<SJob>::step += 1;//TaskPool_<SJob>::step/(TaskPool_<SJob>::numTasks-1);
+      
+      auto nFunc = *j.job;
+      auto dur4Bar = Generator::midiNote(nFunc).dur;
+      auto durationsPattern = Generator::midiNote(*j.job).dur;
+      
+      elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      deltaTime = elapsedTime-startTime;
+      
+      for (auto& dur : durationsPattern) {
+        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
+        
+        // Every note param imediate change allowed except duration
+        if (dur4Bar != Generator::midiNote(*j.job).dur)
+          n = Generator::midiNote(nFunc);
+        else
+          n = Generator::midiNote(*j.job);
+        
+        
+        for (auto& pitch : n.notes) {
+          noteMessage[0] = 144+j.id;
+          noteMessage[1] = pitch;
+          noteMessage[2] = (pitch != REST_NOTE && !insts[j.id].isMuted()) ? n.amp : 0;
+          midiOut.sendMessage(&noteMessage);
+        }
+        
+        insts.at(j.id).step++;
+        if (!TaskPool_<SJob>::isRunning) break;
+        
+        dur = dur/Generator::bpmRatio();
+        
+        elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
+        
+        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        for (auto& pitch : n.notes) {
+          noteMessage[0] = 128+j.id;
+          noteMessage[1] = pitch;
+          noteMessage[2] = 0;
+          midiOut.sendMessage(&noteMessage);
+        }
+        elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        deltaTime = elapsedTime-startTime;
+      }
+    }
+  }
+  
+  // silencing playing notes before exit
+  noteMessage[0] = 128+j.id;
+  midiOut.sendMessage(&noteMessage);
+  
+  return j.id;
+}
+
+int ccTaskDo(vector<Instrument>& insts) {
+  RtMidiOut midiOut = RtMidiOut();
+  unsigned long startTime, elapsedTime;
+  vector<unsigned char> ccMessage;
+  CCJob j;
+  vector<CC> ccComputed;
+  
+  midiOut.openPort(0);
+  ccMessage.push_back(0);
+  ccMessage.push_back(0);
+  ccMessage.push_back(0);
+  
+  while (TaskPool_<CCJob>::isRunning) {
+    if (!TaskPool_<CCJob>::jobs.empty()) {
+      startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      TaskPool_<CCJob>::mtx.lock();
+      j = TaskPool_<CCJob>::jobs.front();
+      TaskPool_<CCJob>::jobs.pop_front();
+      TaskPool_<CCJob>::mtx.unlock();
       
       auto ccs = *j.job;
       ccComputed = Generator::midiCC(ccs);
@@ -474,7 +629,7 @@ void stop() {
 void off() {
   sTskPool.stopRunning();
   ccTskPool.stopRunning();
-  cout << "wide off <>" << endl;
+  cout << "mcode off <>" << endl;
 }
 
 float Generator::bpm = BPM_REF;
@@ -487,28 +642,35 @@ unordered_map<int,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000
 void wide() {
   if (sTskPool.isRunning) {
     thread th = std::thread([&](){
-      sTskPool.numTasks = NUM_TASKS+1; // +1 is metronome
-      ccTskPool.numTasks = NUM_TASKS;
+      //sTskPool.numTasks = NUM_TASKS+1; // +1 is metronome
+      TaskPool_<SJob>::numTasks = NUM_TASKS+1;
+      //ccTskPool.numTasks = NUM_TASKS;
+      TaskPool_<CCJob>::numTasks = NUM_TASKS;
       
       // init instruments
-      for (int id = 0;id < sTskPool.numTasks;++id)
+//      for (int id = 0;id < sTskPool.numTasks;++id)
+      for (int id = 0;id < TaskPool_<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
       
-      auto futPushSJob = async(launch::async,pushSJob,ref(sTskPool),ref(insts));
-      auto futPushCCJob = async(launch::async,pushCCJob,ref(ccTskPool),ref(insts));
+//      auto futPushSJob = async(launch::async,pushSJob,ref(sTskPool),ref(insts));
+      auto futPushSJob = async(launch::async,pushSJob,ref(insts));
+//      auto futPushCCJob = async(launch::async,pushCCJob,ref(ccTskPool),ref(insts));
+      auto futPushCCJob = async(launch::async,pushCCJob,ref(insts));
       
       // init sonic task pool
       for (int i = 0;i < sTskPool.numTasks;++i)
-        sTskPool.tasks.push_back(async(launch::async,taskDo,ref(sTskPool),ref(insts)));
+        //sTskPool.tasks.push_back(async(launch::async,taskDo,ref(sTskPool),ref(insts)));
+        TaskPool_<SJob>::tasks.push_back(async(launch::async,taskDo,ref(insts)));
       
       // init cc task pool
       for (int i = 0;i < ccTskPool.numTasks;++i)
-        ccTskPool.tasks.push_back(async(launch::async,ccTaskDo,ref(ccTskPool),ref(insts)));
+        //ccTskPool.tasks.push_back(async(launch::async,ccTaskDo,ref(ccTskPool),ref(insts)));
+        TaskPool_<SJob>::tasks.push_back(async(launch::async,ccTaskDo,ref(insts)));
 
     });
     th.detach();
     
-    cout << "wide on <((()))>" << endl;
+    cout << "mcode on <((()))>" << endl;
   }
 }
 
