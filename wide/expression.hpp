@@ -11,7 +11,7 @@
 
 using namespace std;
 
-extern const int REST_NOTE = 127;
+extern const int REST_NOTE;
 const float PI = 3.14159265;
 
 typedef vector<int> scale, chord, note;
@@ -59,7 +59,19 @@ const T rnd(vector<T> bunch) {
 }
 
 template <typename T=int>
+const vector<T> rnd(vector<vector<T>> bunch) {
+  return static_cast<vector<T>>(bunch[rand()%bunch.size()]);
+}
+
+template <typename T=int>
 vector<T> scramble(vector<T> n) {
+  random_shuffle(n.begin(),n.end());
+  
+  return n;
+}
+
+template <typename T=int>
+vector<vector<T>> scramble(vector<vector<T>> n) {
   random_shuffle(n.begin(),n.end());
   
   return n;
@@ -68,11 +80,6 @@ vector<T> scramble(vector<T> n) {
 int mod(int countTurn, unsigned long step) {
   return countTurn != 0 ? step%countTurn : 0;
 }
-
-// If mod is in sync with inst's own step no need to set step param
-/*function<int(unsigned long)> mod(int countTurn) {
-  return [&](unsigned long step){return countTurn != 0 ? step%countTurn : 0;};
-}*/
 
 bool when(int countTurn, unsigned long step) {
   return countTurn != 0 ? step%countTurn == 0 : false;
@@ -104,6 +111,11 @@ T cycle(vector<T> v, unsigned long step) {
 }
 
 template <typename T=int>
+vector<T> cycle(vector<vector<T>> v, unsigned long step) {
+  return v.at(step%v.size());
+}
+
+template <typename T=int>
 T rcycle(T max, unsigned long step) {
   return max-step%max-1;
 }
@@ -115,6 +127,11 @@ T rcycle(T min, T max, unsigned long step) {
 
 template <typename T=int>
 T rcycle(vector<T> v, unsigned long step) {
+  return v.at(v.size()-step%v.size()-1);
+}
+
+template <typename T=int>
+vector<T> rcycle(vector<vector<T>> v, unsigned long step) {
   return v.at(v.size()-step%v.size()-1);
 }
 

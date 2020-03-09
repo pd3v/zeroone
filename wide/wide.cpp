@@ -32,7 +32,7 @@ using noteDurMs = pair<int,float>;
 using scaleType = vector<int>;
 using chordType = vector<int>;
 using rhythmType = vector<int>;
-using lbl = int;
+using label = int;
 
 #define i(ch) (insts[ch-1])
 #define sync insts[insts.size()-1].step // sync to metronome
@@ -48,6 +48,7 @@ using lbl = int;
 const short NUM_TASKS = 5;
 const float BAR_DUR_REF = 4000000; // microseconds
 const float BPM_REF = 60;
+const int REST_NOTE = 127;
 
 struct Notes {
   std::vector<int> notes;
@@ -483,7 +484,6 @@ rhythmType Generator::durPattern{4};
 //unordered_map<int,unsigned long> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
 
 unordered_map<int,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
-
 
 void wide() {
   if (sTskPool.isRunning) {
