@@ -1,4 +1,4 @@
-## 0.2
+## 0.3
  
 
 . Refactoring some helper functions to become more generic
@@ -13,7 +13,7 @@
 
 __
 
-## 0.2.1
+## 0.3.1
 
 . Validations in some helper functions
 
