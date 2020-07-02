@@ -170,7 +170,6 @@ public:
     if (notes.dur.size() == 1) {
       notes.dur.resize(BAR_DUR_REF/duration[(notes.dur.front())]);
       fill(notes.dur.begin(),notes.dur.end(),notes.dur.front());
-      
       return notes.dur;
     }
     
