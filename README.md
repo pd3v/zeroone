@@ -25,7 +25,7 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer
 
 the same as	
 
-`i(0).play(n((CMaj),0.9,{4},4)) // Instrument's scale defaults C Major scale`
+`i(1).play(n((CMaj),0.9,{4},4)) // Instrument's scale defaults C Major scale`
 
 
 or
