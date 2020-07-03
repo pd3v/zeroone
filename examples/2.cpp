@@ -1,20 +1,26 @@
-// Play random notes from C Major scale; default scale for every instrument
+// Play random notes from chromatic scale; default scale for every instrument
 
-i(0).play(
-  n(
-    ({rnd(7)}),1,16,4
-  ))
+i(1).play(n(
+  {rnd(12)},
+  1,
+  {16},
+  4
+))
 
-i(0).scale() // (std::vector<int>) { 0, 2, 4, 5, 7, 9, 11 }
+// Random chords on varying repeating rhythm
 
-// Set scale to Minor or Chromatic
+scale CMajor {0,2,4,5,7,9,11}
 
-i(0).scale(Minor)
-i(0).scale(Chromatic)
+i(1).play(n(
+  ({rnd(5),rnd(5,8),rnd(8,12)}), // chromatic scale
+  1,
+  ({4,6,32,3}),
+  4
+))
 
-// Random through scale varying number of notes
-
-i(0).play(
-  n(
-    ({rnd<int>(i(0).scale().size())}),1,32,5
-  ))
+i(2).play(n(
+  {rnd(CMajor)},
+  1,
+  ({4,6,32,3}),
+  5
+))
