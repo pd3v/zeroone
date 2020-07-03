@@ -21,7 +21,7 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer
 	
 #### 3. after message "wide is on <((()))>" appears, type:
 	
-`i(0).play(n(({0,2,4}),0.9,{4},4)) // Instrument "0" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`
+`i(1).play(n(({0,2,4}),0.9,{4},4)) // Instrument "0" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`
 
 the same as	
 
@@ -30,6 +30,6 @@ the same as
 
 or
 
-`i(0).play(n(({0}),0.5,({4,8,4,8,4}),5)) // Instrument "0" sends c note to midi channel 1, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence and 5th octave`
+`i(1).play(n(({0}),0.5,({4,8,4,8,4}),5)) // Instrument "0" sends c note to midi channel 1, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence and 5th octave`
 
 
