@@ -1,6 +1,6 @@
 # wide 
 
-__wide__ is a polyphonic instrument, multi-instrument, DSLish API for live coding music. It sends midi messages to any stand-alone synthesiser or DAW.
+__wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends midi messages to any stand-alone synthesiser or DAW.
 
 ### Dependencies
 
@@ -8,7 +8,7 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish API for live codin
 
 ### Live coding
 
-[__cling__](https://github.com/root-project/cling.git) (an interative interperter C++ interpreter) is for the live coding enverionment.
+[__cling__](https://github.com/root-project/cling.git) (an interative C++ interpreter) is for the live coding enverionment.
 
 *Or you still can compile/link __wide__ as any other c++ library and code with it as so.*
 	
