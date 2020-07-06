@@ -1,22 +1,30 @@
+//
+//  wide - Live coding DSLish API MIDI sequencer
+//
+//  Created by @pd3v_
+//
+
+#pragma once
+
 #include <vector>
 #include <deque>
 #include <mutex>
 #include <future>
+#include <atomic>
+#include "notes.hpp"
+
+extern const float BAR_DUR_REF; // microseconds
+extern const float BPM_REF;
+extern const uint16_t NUM_TASKS;
 
 template<typename T>
 struct TaskPool_ {
-  TaskPool_() {
-    isRunning = true;
-  }
-  
   static std::vector<std::future<int>> tasks;
-  static uint8_t numTasks;
+  static uint16_t numTasks;
   static std::deque<T> jobs;
   
   static bool isRunning;
   static std::mutex mtx;
-  
-  static uint16_t step;
   
   static void stopRunning() {
     isRunning = false;
@@ -33,24 +41,23 @@ template <typename T>
 std::vector<std::future<int>> TaskPool_<T>::tasks{};
 
 template <typename T>
-uint8_t TaskPool_<T>::numTasks = 0;
+uint16_t TaskPool_<T>::numTasks = NUM_TASKS;
 
 template <typename T>
 std::deque<T> TaskPool_<T>::jobs{};
 
 template <typename T>
-bool TaskPool_<T>::isRunning = false;
-
-template <typename T>
 std::mutex TaskPool_<T>::mtx;
 
 template <typename T>
-uint16_t TaskPool_<T>::step = 1010;
+bool TaskPool_<T>::isRunning = true;
 
-
-/*class MySeq {
-public:
-  static int step;
+struct SJob {
+  int id;
+  std::function<Notes()>* job;
 };
 
-int MySeq::step = 0;*/
+struct CCJob {
+  int id;
+  std::vector<std::function<CC()>>* job;
+};
