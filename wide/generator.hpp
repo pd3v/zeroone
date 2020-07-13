@@ -18,7 +18,7 @@ extern const float BPM_REF;
 
 using namespace std;
 
-using noteDurMs = pair<int,float>;
+using noteDurMs = std::pair<int,float>;
 
 class Generator {
 public:

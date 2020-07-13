@@ -10,7 +10,6 @@
 #include <deque>
 #include <mutex>
 #include <future>
-#include <atomic>
 #include "notes.hpp"
 
 extern const float BAR_DUR_REF; // microseconds
@@ -18,7 +17,7 @@ extern const float BPM_REF;
 extern const uint16_t NUM_TASKS;
 
 template<typename T>
-struct TaskPool_ {
+struct TaskPool {
   static std::vector<std::future<int>> tasks;
   static uint16_t numTasks;
   static std::deque<T> jobs;
@@ -32,25 +31,25 @@ struct TaskPool_ {
     for (auto& t : tasks)
       t.get();
     
-    jobs.clear();
     tasks.clear();
+    jobs.clear();
   }
 };
 
 template <typename T>
-std::vector<std::future<int>> TaskPool_<T>::tasks{};
+std::vector<std::future<int>> TaskPool<T>::tasks{};
 
 template <typename T>
-uint16_t TaskPool_<T>::numTasks = NUM_TASKS;
+uint16_t TaskPool<T>::numTasks = NUM_TASKS;
 
 template <typename T>
-std::deque<T> TaskPool_<T>::jobs{};
+std::deque<T> TaskPool<T>::jobs{};
 
 template <typename T>
-std::mutex TaskPool_<T>::mtx;
+std::mutex TaskPool<T>::mtx;
 
 template <typename T>
-bool TaskPool_<T>::isRunning = true;
+bool TaskPool<T>::isRunning = true;
 
 struct SJob {
   int id;
