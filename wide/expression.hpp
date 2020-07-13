@@ -14,8 +14,6 @@
 #include <time.h>
 #include "instrument.hpp"
 
-using namespace std;
-
 extern const int REST_NOTE;
 const float PI = 3.14159265;
 
