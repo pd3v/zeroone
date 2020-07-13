@@ -53,13 +53,13 @@ void pushSJob(vector<Instrument>& insts) {
   SJob j;
   int id = 0;
   
-  while (TaskPool_<SJob>::isRunning) {
-    if (TaskPool_<SJob>::jobs.size() < 20) {
+  while (TaskPool<SJob>::isRunning) {
+    if (TaskPool<SJob>::jobs.size() < 20) {
       id = id%insts.size();
       j.id = id;
       j.job = &*insts.at(id).f;
       
-      TaskPool_<SJob>::jobs.push_back(j);
+      TaskPool<SJob>::jobs.push_back(j);
       
       id++;
     }
@@ -71,13 +71,13 @@ void pushCCJob(vector<Instrument>& insts) {
   CCJob j;
   int id = 0;
   
-  while (TaskPool_<CCJob>::isRunning) {
-    if (TaskPool_<CCJob>::jobs.size() < 20) {
+  while (TaskPool<CCJob>::isRunning) {
+    if (TaskPool<CCJob>::jobs.size() < 20) {
       id = id%insts.size();
       j.id = id;
       j.job = &*insts.at(id).ccs;
       
-      TaskPool_<CCJob>::jobs.push_back(j);
+      TaskPool<CCJob>::jobs.push_back(j);
       
       id++;
     }
@@ -99,14 +99,14 @@ int taskDo(vector<Instrument>& insts) {
   noteMessage.push_back(0);
   noteMessage.push_back(0);
   
-  while (TaskPool_<SJob>::isRunning) {
-    if (!TaskPool_<SJob>::jobs.empty()) {
+  while (TaskPool<SJob>::isRunning) {
+    if (!TaskPool<SJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
-      std::unique_lock<mutex> lock(TaskPool_<SJob>::mtx, std::try_to_lock);
+      std::unique_lock<mutex> lock(TaskPool<SJob>::mtx, std::try_to_lock);
       if (lock.owns_lock()) {
-        j = TaskPool_<SJob>::jobs.front();
-        TaskPool_<SJob>::jobs.pop_front();
+        j = TaskPool<SJob>::jobs.front();
+        TaskPool<SJob>::jobs.pop_front();
         lock.unlock();
         
         nFunc = *j.job;
@@ -139,7 +139,7 @@ int taskDo(vector<Instrument>& insts) {
         }
         
         insts.at(j.id).step++;
-        if (!TaskPool_<SJob>::isRunning) break;
+        if (!TaskPool<SJob>::isRunning) break;
 
         dur = dur/Generator::bpmRatio();
         
@@ -179,14 +179,14 @@ int ccTaskDo(vector<Instrument>& insts) {
   ccMessage.push_back(0);
   ccMessage.push_back(0);
   
-  while (TaskPool_<CCJob>::isRunning) {
-    if (!TaskPool_<CCJob>::jobs.empty()) {
+  while (TaskPool<CCJob>::isRunning) {
+    if (!TaskPool<CCJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
-      std::unique_lock<mutex> lock(TaskPool_<SJob>::mtx, std::try_to_lock);
+      std::unique_lock<mutex> lock(TaskPool<SJob>::mtx, std::try_to_lock);
       if (lock.owns_lock()) {
-        j = TaskPool_<CCJob>::jobs.front();
-        TaskPool_<CCJob>::jobs.pop_front();
+        j = TaskPool<CCJob>::jobs.front();
+        TaskPool<CCJob>::jobs.pop_front();
         lock.unlock();
         
         ccs = *j.job;
@@ -268,8 +268,8 @@ void stop() {
 }
 
 void off() {
-  TaskPool_<SJob>::stopRunning();
-  TaskPool_<CCJob>::stopRunning();
+  TaskPool<SJob>::stopRunning();
+  TaskPool<CCJob>::stopRunning();
   cout << PROJ_NAME << " off <>" << endl;
 }
 
@@ -277,13 +277,13 @@ function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1}
 scaleType Generator::scale = Chromatic;
 
 void wide() {
-  if (TaskPool_<SJob>::isRunning) {
+  if (TaskPool<SJob>::isRunning) {
     thread th = std::thread([&](){
-      TaskPool_<SJob>::numTasks = NUM_TASKS;
-      TaskPool_<CCJob>::numTasks = NUM_TASKS;
+      TaskPool<SJob>::numTasks = NUM_TASKS;
+      TaskPool<CCJob>::numTasks = NUM_TASKS;
       
       // init instruments
-      for (int id = 0;id < TaskPool_<SJob>::numTasks;++id)
+      for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
       
       Metro::setInst(insts.at(insts.size()-1)); // set last instrument as a metronome
@@ -292,12 +292,12 @@ void wide() {
       auto futPushCCJob = async(launch::async,pushCCJob,ref(insts));
       
       // init sonic task pool
-      for (int i = 0;i < TaskPool_<SJob>::numTasks;++i)
-        TaskPool_<SJob>::tasks.push_back(async(launch::async,taskDo,ref(insts)));
+      for (int i = 0;i < TaskPool<SJob>::numTasks;++i)
+        TaskPool<SJob>::tasks.push_back(async(launch::async,taskDo,ref(insts)));
       
       // init cc task pool
-      for (int i = 0;i < TaskPool_<CCJob>::numTasks;++i)
-        TaskPool_<CCJob>::tasks.push_back(async(launch::async,ccTaskDo,ref(insts)));
+      for (int i = 0;i < TaskPool<CCJob>::numTasks;++i)
+        TaskPool<CCJob>::tasks.push_back(async(launch::async,ccTaskDo,ref(insts)));
     });
     th.detach();
     
