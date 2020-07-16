@@ -160,8 +160,12 @@ int taskDo(vector<Instrument>& insts) {
   }
   
   // silencing playing notes before exit
-  noteMessage[0] = 128+j.id;
-  midiOut.sendMessage(&noteMessage);
+  for (auto& pitch : n.notes) {
+    noteMessage[0] = 128+j.id;
+    noteMessage[1] = pitch;
+    noteMessage[2] = 0;
+    midiOut.sendMessage(&noteMessage);
+  }
   
   return j.id;
 }
@@ -267,18 +271,12 @@ void stop() {
   noctrl();
 }
 
-void off() {
-  TaskPool<SJob>::stopRunning();
-  TaskPool<CCJob>::stopRunning();
-  cout << PROJ_NAME << " off <>" << endl;
-}
-
 function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
 scaleType Generator::scale = Chromatic;
 
 void wide() {
   if (TaskPool<SJob>::isRunning) {
-    thread th = std::thread([&](){
+    std::thread([&](){
       TaskPool<SJob>::numTasks = NUM_TASKS;
       TaskPool<CCJob>::numTasks = NUM_TASKS;
       
@@ -298,11 +296,36 @@ void wide() {
       // init cc task pool
       for (int i = 0;i < TaskPool<CCJob>::numTasks;++i)
         TaskPool<CCJob>::tasks.push_back(async(launch::async,ccTaskDo,ref(insts)));
-    });
-    th.detach();
+    }).detach();
     
     cout << PROJ_NAME << " on <((()))>" << endl;
   }
+}
+
+void on(){
+  if (!TaskPool<SJob>::isRunning) {
+    bpm(60);
+  
+    for (auto &inst : insts) {
+      inst.play(silence);
+      inst.noctrl();
+    }
+
+    TaskPool<SJob>::isRunning = true;
+    TaskPool<CCJob>::isRunning = true;
+    wide();
+  } else {
+      cout << PROJ_NAME << " : already : on <((()))>" << endl;
+  }
+}
+
+void off() {
+  TaskPool<SJob>::stopRunning();
+  TaskPool<CCJob>::stopRunning();
+  
+  insts.clear();
+
+  cout << PROJ_NAME << " off <>" << endl;
 }
 
 int main() {
