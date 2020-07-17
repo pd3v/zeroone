@@ -1,5 +1,5 @@
 //
-//  wide - Live coding DSLish API MIDI sequencer
+//  wide - Live coding DSLish API + MIDI sequencer
 //
 //  Created by @pd3v_
 //

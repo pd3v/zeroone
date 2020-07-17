@@ -1,5 +1,5 @@
 //
-//  wide - Live coding DSLish API MIDI sequencer
+//  wide - Live coding DSLish API + MIDI sequencer
 //
 //  Created by @pd3v_
 //
@@ -13,8 +13,6 @@
 #include "generator.hpp"
 
 using namespace std;
-
-using scaleType = vector<int>;
 
 class Instrument {
 public:

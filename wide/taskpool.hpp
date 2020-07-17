@@ -1,5 +1,5 @@
 //
-//  wide - Live coding DSLish API MIDI sequencer
+//  wide - Live coding DSLish API + MIDI sequencer
 //
 //  Created by @pd3v_
 //
@@ -31,8 +31,8 @@ struct TaskPool {
     for (auto& t : tasks)
       t.get();
     
-    tasks.clear();
     jobs.clear();
+    tasks.clear();
   }
 };
 
