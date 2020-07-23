@@ -1,5 +1,5 @@
 //
-//  wide - Live coding DSLish API MIDI sequencer
+//  wide - Live coding DSLish API + MIDI sequencer
 //
 //  Created by @pd3v_
 //
@@ -12,9 +12,9 @@
 #include "notes.hpp"
 #include "generator.hpp"
 
-using namespace std;
+extern const function<Notes()> SILENCE;
 
-using scaleType = vector<int>;
+using namespace std;
 
 class Instrument {
 public:
@@ -42,11 +42,11 @@ public:
   }
   
   vector<int> outDur() {
-    return out.barDur;
+    return out.dur;
   }
   
   int outDur(int durPos) {
-    return out.barDur.at(durPos);
+    return out.dur.at(durPos);
   }
   
   int outOct() {
@@ -88,9 +88,9 @@ public:
   
   int id;
   uint32_t step = 0, ccStep = 0;
-  shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>([]()->Notes{return {{0},0,{4,4,4,4},1};}); // 1/4 note silence
+  shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE); // 1/4 note silence
   shared_ptr<vector<function<CC()>>> ccs;
-  Notes out{};
+  Notes out = {{0},0.,{1},1};
   
 private:
   int _ch;
@@ -111,7 +111,7 @@ public:
   static void setInst(Instrument& _inst) {
     inst = &_inst;
     
-    // Instrument working as a metronome ticks 64 times per bar
+    // Instrument working as a metronome and ticks 64 times per bar
     function<Notes()> beatFunc = [=]()->Notes {return {(vector<int>{0}),0,{metroPrecision},1};};
     inst->play(beatFunc);
   }

@@ -1,6 +1,8 @@
 # wide 
 
-__wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends midi messages to any stand-alone synthesiser or DAW.
+__wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW.
+
+![livecoding_screenshot](https://github.com/pd3v/wide/blob/develop/livecoding_screenshot.png)
 
 ### Dependencies
 
