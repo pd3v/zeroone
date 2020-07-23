@@ -32,7 +32,7 @@ public:
     return {bpm/BPM_REF};
   }
   
-  static int barDurMs(const float _bpm) {
+  static int barDurMs(float _bpm) {
     if (_bpm > 0) {
       bpm = _bpm;
       return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
@@ -42,8 +42,7 @@ public:
   
   static Notes midiNote(const function<Notes(void)>& fn) {
     Notes notes = fn();
-    
-    notes.barDur = notes.dur; // hack to hold durations in bar units to be used in instruments' out
+    protoNotes = notes; // Notes object before converting to MIDI spec
     
     transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
       return (n != REST_NOTE ? notes.oct*12+scale[n%scale.size()] : n);
@@ -113,6 +112,7 @@ public:
 
   static vector<int> scale;
   static float bpm;
+  static Notes protoNotes;
 private:
   static int ampToVel(float amp) {
     return round(127*amp);
@@ -122,5 +122,6 @@ private:
 };
 
 float Generator::bpm = BPM_REF;
+Notes Generator::protoNotes = {{0},0.,{1},1};
 
 unordered_map<int,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
