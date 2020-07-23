@@ -14,16 +14,14 @@ struct Notes {
   double amp;
   std::vector<int> dur;
   int oct;
-  std::vector<int> barDur; // holds original (bar units) dur
+//  std::vector<int> barDur; // holds original (bar units) dur
   
   void print() {
     std::cout << "{ ";
     for_each(notes.begin(),notes.end(),[](int n){std::cout << n << " ";});
     std::cout << "}";
     std::cout << amp << " { ";
-    for_each(dur.begin(),dur.end(),[](int d){
-      std::cout << d << " ";
-    });
+    for_each(dur.begin(),dur.end(),[](int d){std::cout << d << " ";});
     std::cout << "}" << oct << " " << std::endl;
   }
 };
