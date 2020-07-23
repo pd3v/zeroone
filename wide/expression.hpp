@@ -22,7 +22,7 @@ using amp = double;
 using dur = int;
 
 template <typename T>
-const T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
+T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
   return max != 0 ? rand()%static_cast<int>(max) : 0;
 };
 
@@ -42,27 +42,27 @@ typename std::common_type<T,U>::type range(const T& value,const T& min,const T& 
 }
 
 template <typename T>
-const float rnd(const T& max,typename enable_if<is_floating_point<T>::value,void*>::type() = nullptr) {
+float rnd(const T& max,typename enable_if<is_floating_point<T>::value,void*>::type() = nullptr) {
   return range<T>(static_cast<T>(rand()%1000),static_cast<T>(1000),0.f,static_cast<float>(max));
 };
 
 template <typename T>
-const T rnd(const T& min,const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
+T rnd(const T& min,const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
   return max != 0 ? rand()%static_cast<T>(max-min)+min : 0;
 };
 
 template <typename T>
-const float rnd(const T& min,const T& max,typename enable_if<is_floating_point<T>::value,void*>::type() = nullptr) {
+float rnd(const T& min,const T& max,typename enable_if<is_floating_point<T>::value,void*>::type() = nullptr) {
   return range<T>(static_cast<T>(rand()%1000),static_cast<T>(1000),static_cast<float>(min),static_cast<float>(max));
 };
 
 template <typename T=int>
-const T rnd(vector<T> bunch) {
+T rnd(vector<T> bunch) {
   return static_cast<T>(bunch[rand()%bunch.size()]);
 }
 
 template <typename T=int>
-const vector<T> rnd(vector<vector<T>> bunch) {
+vector<T> rnd(vector<vector<T>> bunch) {
   return static_cast<vector<T>>(bunch[rand()%bunch.size()]);
 }
 
@@ -93,17 +93,17 @@ vector<T> rndw(T min,T max,T repeatNum,int weight,int size=10) {
 }
 
 template <typename T=int>
-const vector<T> rnd25(T min,T max,T repeatNum,int size=10) {
+vector<T> rnd25(T min,T max,T repeatNum,int size=10) {
   return rndw(min,max,repeatNum,25,size);
 }
 
 template <typename T=int>
-const vector<T> rnd50(T min,T max,T repeatNum,int size=10) {
+vector<T> rnd50(T min,T max,T repeatNum,int size=10) {
   return wrndw(min,max,repeatNum,50,size);
 }
 
 template <typename T=int>
-const vector<T> rnd75(T min,T max,T repeatNum,int size=10) {
+vector<T> rnd75(T min,T max,T repeatNum,int size=10) {
   return rndw(min,max,repeatNum,75,size);
 }
 
