@@ -48,6 +48,7 @@ const uint16_t NUM_TASKS = 5;
 const float BAR_DUR_REF = 4000000; // microseconds
 const float BPM_REF = 60;
 const int   REST_NOTE = 127;
+const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
 
 void pushSJob(vector<Instrument>& insts) {
   SJob j;
@@ -114,7 +115,7 @@ int taskDo(vector<Instrument>& insts) {
         durationsPattern = Generator::midiNote(*j.job).dur;
         
       } else {
-        durationsPattern = {};
+        durationsPattern.clear();
       }
       
       elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
@@ -126,10 +127,10 @@ int taskDo(vector<Instrument>& insts) {
         // Every note param imediate change allowed except duration
         if (dur4Bar != Generator::midiNote(*j.job).dur)
           n = Generator::midiNote(nFunc);
-        else
+        else {
           n = Generator::midiNote(*j.job);
-        
-        insts[j.id].out = n;
+          insts[j.id].out = Generator::protoNotes; // Notes object before converting to MIDI spec
+        }
         
         for (auto& pitch : n.notes) {
           noteMessage[0] = 144+j.id;
@@ -139,7 +140,7 @@ int taskDo(vector<Instrument>& insts) {
         }
         
         insts.at(j.id).step++;
-        if (!TaskPool<SJob>::isRunning) break;
+        if (!TaskPool<SJob>::isRunning) goto exitingTask; //break;
 
         dur = dur/Generator::bpmRatio();
         
@@ -159,6 +160,7 @@ int taskDo(vector<Instrument>& insts) {
     }
   }
   
+  exitingTask:
   // silencing playing notes before exit
   for (auto& pitch : n.notes) {
     noteMessage[0] = 128+j.id;
@@ -271,8 +273,9 @@ void stop() {
   noctrl();
 }
 
-function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
+//function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
 scaleType Generator::scale = Chromatic;
+Notes nPlaying;
 
 void wide() {
   if (TaskPool<SJob>::isRunning) {
@@ -307,7 +310,7 @@ void on(){
     bpm(60);
   
     for (auto &inst : insts) {
-      inst.play(silence);
+      inst.play(SILENCE);
       inst.noctrl();
     }
 
