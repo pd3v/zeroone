@@ -88,6 +88,7 @@ void pushCCJob(vector<Instrument>& insts) {
 
 int taskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
+  std::unique_lock<mutex> lock(TaskPool<SJob>::mtx,std::defer_lock);
   unsigned long startTime, elapsedTime, deltaTime;
   vector<unsigned char> noteMessage;
   SJob j;
@@ -104,8 +105,7 @@ int taskDo(vector<Instrument>& insts) {
     if (!TaskPool<SJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
-      std::unique_lock<mutex> lock(TaskPool<SJob>::mtx, std::try_to_lock);
-      if (lock.owns_lock()) {
+      if(lock.try_lock()) {
         j = TaskPool<SJob>::jobs.front();
         TaskPool<SJob>::jobs.pop_front();
         lock.unlock();
@@ -113,10 +113,8 @@ int taskDo(vector<Instrument>& insts) {
         nFunc = *j.job;
         dur4Bar = Generator::midiNote(nFunc).dur;
         durationsPattern = Generator::midiNote(*j.job).dur;
-        
-      } else {
-        durationsPattern.clear();
-      }
+      } else
+          durationsPattern.clear();
       
       elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       deltaTime = elapsedTime-startTime;
@@ -140,7 +138,7 @@ int taskDo(vector<Instrument>& insts) {
         }
         
         insts.at(j.id).step++;
-        if (!TaskPool<SJob>::isRunning) goto exitingTask; //break;
+        if (!TaskPool<SJob>::isRunning) goto finishTask;
 
         dur = dur/Generator::bpmRatio();
         
@@ -160,7 +158,7 @@ int taskDo(vector<Instrument>& insts) {
     }
   }
   
-  exitingTask:
+  finishTask:
   // silencing playing notes before exit
   for (auto& pitch : n.notes) {
     noteMessage[0] = 128+j.id;
@@ -174,6 +172,7 @@ int taskDo(vector<Instrument>& insts) {
 
 int ccTaskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
+  std::unique_lock<mutex> lock(TaskPool<CCJob>::mtx,std::defer_lock);
   unsigned long startTime, elapsedTime;
   vector<unsigned char> ccMessage;
   CCJob j;
@@ -189,18 +188,15 @@ int ccTaskDo(vector<Instrument>& insts) {
     if (!TaskPool<CCJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
-      std::unique_lock<mutex> lock(TaskPool<SJob>::mtx, std::try_to_lock);
-      if (lock.owns_lock()) {
+      if (lock.try_lock()) {
         j = TaskPool<CCJob>::jobs.front();
         TaskPool<CCJob>::jobs.pop_front();
         lock.unlock();
         
         ccs = *j.job;
         ccComputed = Generator::midiCC(ccs);
-        
-      } else {
-        ccComputed = {};
-      }
+      } else
+        ccComputed.clear();
       
       for (auto &cc : ccComputed) {
         ccMessage[0] = 176+j.id;
@@ -273,7 +269,6 @@ void stop() {
   noctrl();
 }
 
-//function<Notes()> silence = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
 scaleType Generator::scale = Chromatic;
 Notes nPlaying;
 
