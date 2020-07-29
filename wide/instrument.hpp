@@ -105,20 +105,24 @@ private:
 
 struct Metro {
 public:
-  const static unsigned long metroPrecision = 64;
+  static int tickPrecision;
   static Instrument* inst;
   
   static void setInst(Instrument& _inst) {
     inst = &_inst;
     
-    // Instrument working as a metronome and ticks 64 times per bar
-    function<Notes()> beatFunc = [=]()->Notes {return {(vector<int>{0}),0,{metroPrecision},1};};
+    // Instrument working as a metronome and ticks 32 times per bar
+    function<Notes()> beatFunc = [=]()->Notes {return {(vector<int>{0}),0,{tickPrecision},1};};
     inst->play(beatFunc);
+  }
+  
+  static void setTick(int _tickPrecision) {
+    tickPrecision = _tickPrecision;
   }
   
   //FIXME: this range conversion sometimes returns the same value for two contiguous steps
   static uint32_t sync(int timeSignature) {
-    return floor(static_cast<float>(inst->step)*(timeSignature/64.0));
+    return floor(inst->step*(timeSignature/static_cast<float>(tickPrecision)));
   }
   
   static uint32_t playhead() {
@@ -127,4 +131,5 @@ public:
 };
 
 Instrument* Metro::inst = nullptr;
+int Metro::tickPrecision = 32;
 
