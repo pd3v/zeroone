@@ -131,5 +131,5 @@ public:
 };
 
 Instrument* Metro::inst = nullptr;
-int Metro::tickPrecision = 32;
+int Metro::tickPrecision = 64;
 
