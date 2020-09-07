@@ -89,7 +89,8 @@ void pushCCJob(vector<Instrument>& insts) {
 int taskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
   std::unique_lock<mutex> lock(TaskPool<SJob>::mtx,std::defer_lock);
-  unsigned long startTime, elapsedTime, deltaTime;
+  unsigned long startTime, elapsedTime, deltaTime = 0;
+  int16_t spuriousMs = 0;
   vector<unsigned char> noteMessage;
   SJob j;
   Notes n;
@@ -103,9 +104,11 @@ int taskDo(vector<Instrument>& insts) {
   
   while (TaskPool<SJob>::isRunning) {
     if (!TaskPool<SJob>::jobs.empty()) {
-      startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
       
-      if(lock.try_lock()) {
+      lock.try_lock();
+      
+      if(lock.owns_lock()) {
         j = TaskPool<SJob>::jobs.front();
         TaskPool<SJob>::jobs.pop_front();
         lock.unlock();
@@ -113,47 +116,50 @@ int taskDo(vector<Instrument>& insts) {
         nFunc = *j.job;
         dur4Bar = Generator::midiNote(nFunc).dur;
         durationsPattern = Generator::midiNote(*j.job).dur;
-      } else
-          durationsPattern.clear();
-      
-      elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-      deltaTime = elapsedTime-startTime;
-      
-      for (auto& dur : durationsPattern) {
-        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
-        
-        // Every note param imediate change allowed except duration
-        if (dur4Bar != Generator::midiNote(*j.job).dur)
-          n = Generator::midiNote(nFunc);
-        else {
-          n = Generator::midiNote(*j.job);
-          insts[j.id].out = Generator::protoNotes; // Notes object before converting to MIDI spec
-        }
-        
-        for (auto& pitch : n.notes) {
-          noteMessage[0] = 144+j.id;
-          noteMessage[1] = pitch;
-          noteMessage[2] = (pitch != REST_NOTE && !insts[j.id].isMuted()) ? n.amp : 0;
-          midiOut.sendMessage(&noteMessage);
-        }
-        
-        insts.at(j.id).step++;
-        if (!TaskPool<SJob>::isRunning) goto finishTask;
-
-        dur = dur/Generator::bpmRatio();
         
         elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
+        deltaTime = elapsedTime-startTime-spuriousMs;
+        spuriousMs = 0;
         
-        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        for (auto& pitch : n.notes) {
-          noteMessage[0] = 128+j.id;
-          noteMessage[1] = pitch;
-          noteMessage[2] = 0;
-          midiOut.sendMessage(&noteMessage);
+        for (auto& dur : durationsPattern) {
+          startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
+          
+          // Every note param imediate change allowed except duration
+          if (dur4Bar != Generator::midiNote(*j.job).dur)
+            n = Generator::midiNote(nFunc);
+          else {
+            n = Generator::midiNote(*j.job);
+            insts[j.id].out = Generator::protoNotes; // Notes object before converting to MIDI spec
+          }
+          
+          for (auto& pitch : n.notes) {
+            noteMessage[0] = 144+j.id;
+            noteMessage[1] = pitch;
+            noteMessage[2] = (pitch != REST_NOTE && !insts[j.id].isMuted()) ? n.amp : 0;
+            midiOut.sendMessage(&noteMessage);
+          }
+          
+          insts.at(j.id).step++;
+          if (!TaskPool<SJob>::isRunning) goto finishTask;
+          
+          dur = dur/Generator::bpmRatio();
+          
+          elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+          this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
+          
+          startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+          for (auto& pitch : n.notes) {
+            noteMessage[0] = 128+j.id;
+            noteMessage[1] = pitch;
+            noteMessage[2] = 0;
+            midiOut.sendMessage(&noteMessage);
+          }
+          elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+          deltaTime = elapsedTime-startTime;
         }
-        elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        deltaTime = elapsedTime-startTime;
+      } else {
+          this_thread::sleep_for(chrono::microseconds(1000));
+          spuriousMs += 1000;
       }
     }
   }
@@ -174,6 +180,7 @@ int ccTaskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
   std::unique_lock<mutex> lock(TaskPool<CCJob>::mtx,std::defer_lock);
   unsigned long startTime, elapsedTime;
+  int16_t spuriousMs = 0;
   vector<unsigned char> ccMessage;
   CCJob j;
   std::vector<std::function<CC()>> ccs;
@@ -188,27 +195,32 @@ int ccTaskDo(vector<Instrument>& insts) {
     if (!TaskPool<CCJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
-      if (lock.try_lock()) {
+      lock.try_lock();
+      
+      if (lock.owns_lock()) {
         j = TaskPool<CCJob>::jobs.front();
         TaskPool<CCJob>::jobs.pop_front();
         lock.unlock();
         
         ccs = *j.job;
         ccComputed = Generator::midiCC(ccs);
-      } else
-        ccComputed.clear();
-      
-      for (auto &cc : ccComputed) {
-        ccMessage[0] = 176+j.id;
-        ccMessage[1] = cc.ch;
-        ccMessage[2] = cc.value;
-        midiOut.sendMessage(&ccMessage);
+        
+        for (auto &cc : ccComputed) {
+          ccMessage[0] = 176+j.id;
+          ccMessage[1] = cc.ch;
+          ccMessage[2] = cc.value;
+          midiOut.sendMessage(&ccMessage);
+        }
+        
+        insts.at(j.id).ccStep++;
+        
+        elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime-spuriousMs)));
+        spuriousMs = 0;
+      } else {
+        this_thread::sleep_for(chrono::milliseconds(1));
+        spuriousMs += 1;
       }
-      
-      insts.at(j.id).ccStep++;
-      
-      elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-      this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime)));
     }
   }
   
