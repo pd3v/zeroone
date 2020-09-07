@@ -99,7 +99,7 @@ vector<T> rnd25(T min,T max,T repeatNum,int size=10) {
 
 template <typename T=int>
 vector<T> rnd50(T min,T max,T repeatNum,int size=10) {
-  return wrndw(min,max,repeatNum,50,size);
+  return rndw(min,max,repeatNum,50,size);
 }
 
 template <typename T=int>
