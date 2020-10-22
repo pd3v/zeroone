@@ -12,6 +12,7 @@
 #include "notes.hpp"
 #include "generator.hpp"
 
+
 extern const function<Notes()> SILENCE;
 
 using namespace std;
