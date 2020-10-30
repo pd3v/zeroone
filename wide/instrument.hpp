@@ -12,8 +12,8 @@
 #include "notes.hpp"
 #include "generator.hpp"
 
-
 extern const function<Notes()> SILENCE;
+extern const vector<function<CC()>> NO_CTRL;
 
 using namespace std;
 
@@ -22,7 +22,6 @@ public:
   Instrument(int id) {
     this->id = id;
     _ch = id;
-    ccs = make_shared<vector<function<CC()>>>((vector<function<CC()>>){[&]()->CC{return (CC){127,0};}});
   }
   
   void play(function<Notes(void)> fn) {
@@ -89,8 +88,8 @@ public:
   
   int id;
   uint32_t step = 0, ccStep = 0;
-  shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE); // 1/4 note silence
-  shared_ptr<vector<function<CC()>>> ccs;
+  shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE);
+  shared_ptr<vector<function<CC(void)>>> const ccs = make_shared<vector<function<CC(void)>>>(NO_CTRL);
   Notes out = {{0},0.,{1},1};
   
 private:
@@ -113,7 +112,7 @@ public:
     inst = &_inst;
     
     // Instrument working as a metronome and ticks 32 times per bar
-    function<Notes()> beatFunc = [=]()->Notes {return {(vector<int>{0}),0,{tickPrecision},1};};
+    function<Notes()> beatFunc = [=]()->Notes {return {(vector<int>{}),0,{tickPrecision},1};};
     inst->play(beatFunc);
   }
   

@@ -43,12 +43,13 @@ using label = int;
 #define cc(ch,value) [&]()->CC{return (CC){ch,value};}
 #define bar Metro::sync(Metro::metroPrecision)
 
-const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [e]NTROPY";
+const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
 const uint16_t NUM_TASKS = 5;
 const float BAR_DUR_REF = 4000000; // microseconds
 const float BPM_REF = 60;
 const int   REST_NOTE = 127;
-const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{0}),0,{4,4,4,4},1};};
+const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
+const vector<function<CC()>> NO_CTRL = {};
 
 void pushSJob(vector<Instrument>& insts) {
   SJob j;
