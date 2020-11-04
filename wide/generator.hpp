@@ -44,18 +44,17 @@ public:
     Notes notes = fn();
     protoNotes = notes; // Notes object before converting to MIDI spec
     
-    transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
-      return (n != REST_NOTE ? notes.oct*12+scale[n%scale.size()] : n);
-    });
+    if (notes.oct != 1) // MIDI note value depends on octave specification
+      transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
+        return (n != REST_NOTE ? notes.oct*12+scale[n%scale.size()] : n);
+      });
     
     notes.amp = ampToVel(notes.amp);
     notes.dur = parseDurPattern(fn);
     
     transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](int d){
-      return static_cast<int>(duration[d]);
+      return duration[d];
     });
-  
-    notes.oct = static_cast<int>(notes.oct);
     
     return notes;
   }
@@ -118,10 +117,10 @@ private:
     return round(127*amp);
   }
   
-  static unordered_map<int,int> duration;
+  static unordered_map<int8_t,int> duration;
 };
 
 float Generator::bpm = BPM_REF;
 Notes Generator::protoNotes = {{0},0.,{1},1};
 
-unordered_map<int,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
+unordered_map<int8_t,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};

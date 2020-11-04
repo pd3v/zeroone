@@ -353,6 +353,22 @@ vector<T> rotr(vector<T> v) {
   return v;
 }
 
+vector<int> transp(vector<int> v,int oct) {
+  transform(v.begin(),v.end(),v.begin(),[&](int note){return 12*oct+note;});
+  
+  return v;
+}
+
+vector<int> transp(vector<int> v,vector<int> o) {
+  transform(v.begin(),v.end(),o.begin(),v.begin(),[&](int note,int oct) {
+    auto noteTransp = 12*oct+note;
+    return (noteTransp < 0 || noteTransp > 127) ? note : noteTransp;
+  });
+  
+  return v;
+}
+
+
 float sine(int degrees) {
   return fabs(sin(degrees*PI/180));
 }
@@ -368,4 +384,4 @@ scale Minor      {0,2,3,5,7,8,10};
 scale Whole      {0,2,4,6,8,10};
 
 // Chords
-chord CMaj{0,4,7}, CMin{0,3,7}; // just for testing purposes
+chord C{0,4,7}, Cmin{0,3,7}; // just for testing purposes

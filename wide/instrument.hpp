@@ -111,7 +111,7 @@ public:
   static void setInst(Instrument& _inst) {
     inst = &_inst;
     
-    // Instrument working as a metronome and ticks 32 times per bar
+    // Instrument working as a metronome and ticks 64 times per bar
     function<Notes()> beatFunc = [=]()->Notes {return {(vector<int>{}),0,{tickPrecision},1};};
     inst->play(beatFunc);
   }
