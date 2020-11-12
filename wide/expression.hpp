@@ -14,10 +14,8 @@
 #include <time.h>
 #include "instrument.hpp"
 
-extern const int REST_NOTE;
 const float PI = 3.14159265;
 
-typedef vector<int> scale, chord, note;
 using amp = double;
 using dur = int;
 
@@ -368,20 +366,6 @@ vector<int> transp(vector<int> v,vector<int> o) {
   return v;
 }
 
-
 float sine(int degrees) {
   return fabs(sin(degrees*PI/180));
 }
-
-// ====================================
-
-int x = REST_NOTE;
-
-// Scales
-scale Chromatic  {0,1,2,3,4,5,6,7,8,9,10,11};
-scale Major      {0,2,4,5,7,9,11};
-scale Minor      {0,2,3,5,7,8,10};
-scale Whole      {0,2,4,6,8,10};
-
-// Chords
-chord C{0,4,7}, Cmin{0,3,7}; // just for testing purposes
