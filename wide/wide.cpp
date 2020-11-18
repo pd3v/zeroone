@@ -19,13 +19,17 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
+#include "mnotation.h"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+  #pragma cling load("$LD_LIBRARY_PATH/libmnotation.dylib")
 #elif __APPLE__
   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
+  #pragma cling load("$DYLD_LIBRARY_PATH/libmnotation.dylib")
 #elif __unix__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+  #pragma cling load("$LD_LIBRARY_PATH/libmnotation.dylib")
 #endif
 
 using namespace std;
