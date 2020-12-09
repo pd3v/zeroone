@@ -16,8 +16,8 @@
 
 const float PI = 3.14159265;
 
-using amp = double;
-using dur = int;
+//using ampT = double;
+//using durT = int;
 
 template <typename T>
 T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
@@ -351,19 +351,25 @@ vector<T> rotr(vector<T> v) {
   return v;
 }
 
-vector<int> transp(vector<int> v,int oct) {
-  transform(v.begin(),v.end(),v.begin(),[&](int note){return 12*oct+note;});
+template <typename T=int>
+vector<int> transp(vector<T> v,int oct) {
+  vector<int> _v (v.begin(),v.end());
   
-  return v;
+  transform(_v.begin(),_v.end(),_v.begin(),[&](int note){return 12*oct+note;});
+  
+  return _v;
 }
 
-vector<int> transp(vector<int> v,vector<int> o) {
-  transform(v.begin(),v.end(),o.begin(),v.begin(),[&](int note,int oct) {
-    auto noteTransp = 12*oct+note;
+template <typename T=int>
+vector<int> transp(vector<T> v,vector<int> oct) {
+  vector<int> _v (v.begin(),v.end());
+  
+  transform(_v.begin(),_v.end(),oct.begin(),_v.begin(),[&](int note,int _oct) {
+    auto noteTransp = 12*_oct+note;
     return (noteTransp < 0 || noteTransp > 127) ? note : noteTransp;
   });
   
-  return v;
+  return _v;
 }
 
 float sine(int degrees) {

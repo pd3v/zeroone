@@ -11,6 +11,8 @@
 #include <functional>
 #include <math.h>
 #include "notes.hpp"
+//#include "/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.h"
+//#include "chrono.h"
 
 extern const int REST_NOTE;
 extern const float BAR_DUR_REF; // microseconds
@@ -53,7 +55,7 @@ public:
     notes.dur = parseDurPattern(fn);
     
     transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](int d){
-      return duration[d];
+      return duration[d]/bpmRatio();
     });
     
     return notes;
@@ -120,6 +122,7 @@ private:
   static unordered_map<int8_t,int> duration;
 };
 
+vector<int> Generator::scale = {}; // Chromatic scale as default
 float Generator::bpm = BPM_REF;
 Notes Generator::protoNotes = {{0},0.,{1},1};
 

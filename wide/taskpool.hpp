@@ -16,7 +16,7 @@ extern const float BAR_DUR_REF; // microseconds
 extern const float BPM_REF;
 extern const uint16_t NUM_TASKS;
 
-template<typename T>
+template <typename T>
 struct TaskPool {
   static std::vector<std::future<int>> tasks;
   static uint16_t numTasks;
