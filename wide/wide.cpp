@@ -19,24 +19,13 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
-#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.h"
-#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.h"
-#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/chords.h"
-#include "/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.h"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
-//  #pragma cling load("$LD_LIBRARY_PATH/libmnotation.dylib")
 #elif __APPLE__
   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
-  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.cpp")
-  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.cpp")
-  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/chords.cpp")
-  #pragma cling load("/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.cpp")
-//  #pragma cling load("$DYLD_LIBRARY_PATH/libmnotation.dylib")
 #elif __unix__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
-//  #pragma cling load("$LD_LIBRARY_PATH/libmnotation.dylib")
 #endif
 
 using namespace std;
@@ -58,15 +47,12 @@ using label = int;
 #define bar Metro::sync(Metro::metroPrecision)
 
 const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
-const uint16_t NUM_TASKS = 1;
+const uint16_t NUM_TASKS = 5;
 const float BAR_DUR_REF = 4000000; // microseconds
 const float BPM_REF = 60;
 const int   REST_NOTE = 127;
 const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
 const vector<function<CC()>> NO_CTRL = {};
-
-long ccsleep = 100;
-//int8_t oh = 2;
 
 void pushSJob(vector<Instrument>& insts) {
   SJob j;
@@ -123,30 +109,17 @@ int taskDo(vector<Instrument>& insts) {
   while (TaskPool<SJob>::isRunning) {
     if (!TaskPool<SJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
-      
-//      cout << "************** pre try-lock **************" << endl;
+    
       lock.try_lock();
       
-//      cout << "************** pre lock **************" << endl;
       if (lock.owns_lock()) {
         j = TaskPool<SJob>::jobs.front();
         TaskPool<SJob>::jobs.pop_front();
       
         lock.unlock();
-        /*
-        {
-            cout << j.id << " about to cv wait" << endl;
-//            Metro::cv.wait(lock,[&]{ return !insts[j.id].wait() ? true : false;});
-            Metro::cv.wait(lock,[&]{ return !Metro::waitOverall;});
-            cout << j.id << " release" << endl;
-        }
-        */
-//        cout << "************** post lock **************" << endl;
         
         nFunc = *j.job;
-        
         dur4Bar = Generator::midiNote(nFunc).dur;
-        
         durationsPattern = Generator::midiNote(*j.job).dur;
         
         elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
@@ -174,8 +147,6 @@ int taskDo(vector<Instrument>& insts) {
           insts.at(j.id).step++;
           if (!TaskPool<SJob>::isRunning) goto finishTask;
           
-//          dur = dur/Generator::bpmRatio();
-          
           elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
           
@@ -189,13 +160,7 @@ int taskDo(vector<Instrument>& insts) {
           elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           deltaTime = elapsedTime-startTime;
         }
-        
-//        cout << "it's true!" << endl;
-//        if (Metro::playhead()%4 == 0)
-          insts.at(j.id).chrono(chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count());
-        
       } else {
-          cout << "spurious job:" << j.id << endl;
           this_thread::sleep_for(chrono::microseconds(1000));
           spuriousMs += 1000;
       }
@@ -253,12 +218,12 @@ int ccTaskDo(vector<Instrument>& insts) {
         insts.at(j.id).ccStep++;
         
         elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        this_thread::sleep_for(chrono::milliseconds(ccsleep-(elapsedTime-startTime-spuriousMs)));
+        this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime-spuriousMs)));
         spuriousMs = 0;
+        
       } else {
           this_thread::sleep_for(chrono::milliseconds(1));
           spuriousMs += 1;
-//        cout << "spurious cc:" << j.id << endl;
       }
     }
   }
@@ -331,11 +296,10 @@ void wide() {
       // init instruments
       for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
-      
-//      Metro::setInst(insts.at(insts.size()-1)); // set last instrument as a metronome
+    
       Metro::insts = &insts;
       Metro::start();
-    
+
       auto futPushSJob = async(launch::async,pushSJob,ref(insts));
       auto futPushCCJob = async(launch::async,pushCCJob,ref(insts));
       
@@ -374,10 +338,9 @@ void on(){
 void off() {
   TaskPool<SJob>::stopRunning();
   TaskPool<CCJob>::stopRunning();
+  Metro::stop();
   
   insts.clear();
-  
-  Metro::stop();
   
   cout << PROJ_NAME << " off <>" << endl;
 }
