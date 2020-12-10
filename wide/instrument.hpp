@@ -11,7 +11,6 @@
 #include <math.h>
 #include "notes.hpp"
 #include "generator.hpp"
-#include "/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.h"
 
 extern const function<Notes()> SILENCE;
 extern const vector<function<CC()>> NO_CTRL;
