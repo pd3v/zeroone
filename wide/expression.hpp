@@ -16,9 +16,6 @@
 
 const float PI = 3.14159265;
 
-//using ampT = double;
-//using durT = int;
-
 template <typename T>
 T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
   return max != 0 ? rand()%static_cast<int>(max) : 0;
