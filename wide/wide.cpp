@@ -19,28 +19,22 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
-<<<<<<< HEAD
-=======
 #include <iomanip> // std::flush
 //#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/mnotation.h"
 #include "/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.h"
 #include "/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.h"
 #include "/Volumes/Data/Xcode Projects/mnotation/mnotation/chords.h"
 #include "/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.h"
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #elif __APPLE__
   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
-<<<<<<< HEAD
-=======
 //  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/mnotation.h")
   #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.cpp")
   #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.cpp")
   #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/chords.cpp")
   #pragma cling load("/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.cpp")
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
 #elif __unix__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
@@ -64,11 +58,7 @@ using label = int;
 #define bar Metro::sync(Metro::metroPrecision)
 
 const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
-<<<<<<< HEAD
 const uint16_t NUM_TASKS = 5;
-=======
-const uint16_t NUM_TASKS = 4;
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
 const float BAR_DUR_REF = 4000000; // microseconds
 const int8_t TASKPOOL_SIZE = 64;
 const float BPM_REF = 60;
@@ -145,26 +135,7 @@ int taskDo(vector<Instrument>& insts) {
   
   while (TaskPool<SJob>::isRunning) {
     if (!TaskPool<SJob>::jobs.empty()) {
-<<<<<<< HEAD
-      startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
-    
-      lock.try_lock();
-      
-      if (lock.owns_lock()) {
-        j = TaskPool<SJob>::jobs.front();
-        TaskPool<SJob>::jobs.pop_front();
-      
-        lock.unlock();
-        
-        nFunc = *j.job;
-        dur4Bar = Generator::midiNote(nFunc).dur;
-        durationsPattern = Generator::midiNote(*j.job).dur;
-        
-        elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        deltaTime = elapsedTime-startTime-spuriousMs;
-        spuriousMs = 0;
-=======
-      startTimeTotal = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();      
+      startTimeTotal = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
 
       barDurMs = Generator::barDurMs();
 
@@ -179,7 +150,6 @@ int taskDo(vector<Instrument>& insts) {
         durationsPattern = playNotes.dur;
         
         Metro::syncInstTask(j.id);
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
         
         for (auto& dur : durationsPattern) {
           startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
@@ -202,16 +172,10 @@ int taskDo(vector<Instrument>& insts) {
           yieldEvalParcelTime = static_cast<long>(floor(dur/barDurMs*Metro::minWaitingTime()));
 
           elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-          
-<<<<<<< HEAD
-          elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-          this_thread::sleep_for(chrono::microseconds(dur-(elapsedTime-startTime)));
-=======
           t = dur-(elapsedTime-startTime+yieldEvalParcelTime);
           t = t >= 0 ? t : 0; // prevent negative values for durstion time
           
           this_thread::sleep_for(chrono::microseconds(t));
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
           
           startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           for (auto& note : playNotes.notes) {
@@ -223,17 +187,10 @@ int taskDo(vector<Instrument>& insts) {
           elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           deltaTime = elapsedTime-startTime;
         }
-<<<<<<< HEAD
-      } else {
-          this_thread::sleep_for(chrono::microseconds(1000));
-          spuriousMs += 1000;
-=======
-      
         elapsedTimeTotal = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         yieldEvalTime = elapsedTimeTotal-startTimeTotal-static_cast<long>(barDurMs);
       
         Metro::instsWaitingTimes.at(j.id) = (yieldEvalTime > 0 ? yieldEvalTime : Metro::minWaitingTime());
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
       }
     }
   }
@@ -273,34 +230,6 @@ int ccTaskDo(vector<Instrument>& insts) {
       TaskPool<CCJob>::jobs.pop_front();
       TaskPool<CCJob>::mtx.unlock();
       
-<<<<<<< HEAD
-      lock.try_lock();
-      
-      if (lock.owns_lock()) {
-        j = TaskPool<CCJob>::jobs.front();
-        TaskPool<CCJob>::jobs.pop_front();
-        lock.unlock();
-        
-        ccs = *j.job;
-        ccComputed = Generator::midiCC(ccs);
-        
-        for (auto &cc : ccComputed) {
-          ccMessage[0] = 176+j.id;
-          ccMessage[1] = cc.ch;
-          ccMessage[2] = cc.value;
-          midiOut.sendMessage(&ccMessage);
-        }
-        
-        insts.at(j.id).ccStep++;
-        
-        elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime-spuriousMs)));
-        spuriousMs = 0;
-        
-      } else {
-          this_thread::sleep_for(chrono::milliseconds(1));
-          spuriousMs += 1;
-=======
       ccs = *j.job;
       ccComputed = Generator::midiCC(ccs);
     
@@ -309,7 +238,6 @@ int ccTaskDo(vector<Instrument>& insts) {
         ccMessage[1] = cc.ch;
         ccMessage[2] = cc.value;
         midiOut.sendMessage(&ccMessage);
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
       }
       
       insts.at(j.id).ccStep++;
@@ -385,12 +313,8 @@ void wide() {
       // init instruments
       for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
-<<<<<<< HEAD
-    
-=======
       
       // Metro::setInst(insts.at(insts.size()-1)); // set last instrument as a metronome
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
       Metro::insts = &insts;
       Metro::start();
 
