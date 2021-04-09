@@ -21,9 +21,9 @@ struct TaskPool {
   static std::vector<std::future<int>> tasks;
   static uint16_t numTasks;
   static std::deque<T> jobs;
-  
   static bool isRunning;
   static std::mutex mtx;
+  static std::atomic<uint16_t> yieldTaskCntr;
   
   static void stopRunning() {
     isRunning = false;
@@ -47,6 +47,9 @@ std::deque<T> TaskPool<T>::jobs{};
 
 template <typename T>
 std::mutex TaskPool<T>::mtx;
+
+template <typename T>
+std::atomic<uint16_t> TaskPool<T>::yieldTaskCntr(0);
 
 template <typename T>
 bool TaskPool<T>::isRunning = true;

@@ -12,7 +12,6 @@
 #include <type_traits>
 #include <iterator>
 #include <time.h>
-#include "instrument.hpp"
 
 const float PI = 3.14159265;
 
@@ -88,18 +87,18 @@ vector<T> rndw(T min,T max,T repeatNum,int weight,int size=10) {
 }
 
 template <typename T=int>
-vector<T> rnd25(T min,T max,T repeatNum,int size=10) {
-  return rndw(min,max,repeatNum,25,size);
+T rnd25(T min,T max,T repeatNum,int size=10) {
+  return rndw(min,max,repeatNum,25,size).at(0);
 }
 
 template <typename T=int>
-vector<T> rnd50(T min,T max,T repeatNum,int size=10) {
-  return rndw(min,max,repeatNum,50,size);
+T rnd50(T min,T max,T repeatNum,int size=10) {
+  return rndw(min,max,repeatNum,50,size).at(0);
 }
 
 template <typename T=int>
-vector<T> rnd75(T min,T max,T repeatNum,int size=10) {
-  return rndw(min,max,repeatNum,75,size);
+T rnd75(T min,T max,T repeatNum,int size=10) {
+  return rndw(min,max,repeatNum,75,size).at(0);
 }
 
 int mod(int countTurn) {
@@ -127,6 +126,11 @@ T thisthat(T _this, T _that, function<bool()> pred) {
 template <typename T=int>
 T thisthat(T _this, T _that, bool pred) {
   return (pred == true ? _this : _that);
+}
+
+template <typename T=int>
+T thisthator(T _this, T _that, T _or, int turn, int every, int orEvery) {
+  return thisthat(_this, thisthat(_that, _or, turn, orEvery), turn, every);
 }
 
 template <typename T=int>
