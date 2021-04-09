@@ -93,11 +93,6 @@ public:
   shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE);
   shared_ptr<vector<function<CC(void)>>> const ccs = make_shared<vector<function<CC(void)>>>(NO_CTRL);
   Notes out = {{0},0.,{1},1};
-<<<<<<< HEAD
-
-=======
-  
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
 private:
   int _ch;
   bool _mute = false;
@@ -105,14 +100,6 @@ private:
   vector<function<CC()>> _ccs{};
 };
 
-<<<<<<< HEAD
-// Metronome standalone, independent thread
-struct Metro {
-public:
-  static vector<Instrument>* insts;
-  static uint32_t step;
-  static bool isRunning;
-=======
 // Metronome standalone, in an independent thread
 struct Metro {
 public:
@@ -122,7 +109,6 @@ public:
   static std::vector<Instrument> *insts;
   static std::vector<long> instsWaitingTimes;
   static unsigned long startTime, elapsedTime, barStartTime;
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
   
   static void setTick(int _tickPrecision) {
     tickPrecision = _tickPrecision;
@@ -132,24 +118,6 @@ public:
     return tickPrecision;
   }
   
-<<<<<<< HEAD
-  static bool playTask() {
-    isRunning = true;
-    
-    while (isRunning) {
-      step++;
-      
-      if (!isRunning) break;
-      
-      this_thread::sleep_for(chrono::microseconds(Generator::barDurMs()/tickPrecision));
-    }
-    
-    return false;
-  }
-  
-  static void start() {
-     taskDo = async(launch::async,Metro::playTask);
-=======
   static void start() {
     on = true;
     long t = 0;
@@ -170,11 +138,10 @@ public:
         this_thread::sleep_for(chrono::microseconds(t));
       }
     }).detach();
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
   }
   
   static void stop() {
-    isRunning = false;
+    TaskPool<SJob>::isRunning = false;
     step = 0;
     TaskPool<SJob>::yieldTaskCntr.store(0);
   }
@@ -209,14 +176,6 @@ private:
   static future<bool> taskDo;
 };
 
-<<<<<<< HEAD
-vector<Instrument>* Metro::insts = nullptr;
-uint16_t Metro::tickPrecision = 64;
-uint32_t Metro::step = 0;
-bool Metro::isRunning = true;
-future<bool> Metro::taskDo;
-
-=======
 uint16_t Metro::tickPrecision = 64;
 uint32_t Metro::step = 0;
 bool Metro::on = true;
@@ -224,4 +183,3 @@ atomic<bool> Metro::yieldInstTask(true); // on start sync
 unsigned long Metro::startTime = 0, Metro::elapsedTime = 0, Metro::barStartTime = 0;
 std::vector<Instrument> *Metro::insts = nullptr;
 std::vector<long> Metro::instsWaitingTimes(NUM_TASKS,0);
->>>>>>> thread_sync_metro_as_a_thread_delta_metro_insts
