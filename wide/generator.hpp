@@ -11,8 +11,6 @@
 #include <functional>
 #include <math.h>
 #include "notes.hpp"
-//#include "/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.h"
-//#include "chrono.h"
 
 extern const int REST_NOTE;
 extern const float BAR_DUR_REF; // microseconds
@@ -25,7 +23,7 @@ using noteDurMs = std::pair<int,float>;
 class Generator {
 public:
   
-  static int barDurMs() {
+  static float barDurMs() {
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
   
@@ -34,10 +32,10 @@ public:
     return {bpm/BPM_REF};
   }
   
-  static int barDurMs(float _bpm) {
+  static float barDurMs(float _bpm) {
     if (_bpm > 0) {
       bpm = _bpm;
-      return static_cast<unsigned int>(BAR_DUR_REF/(bpm/BPM_REF));
+      return BAR_DUR_REF/(bpm/BPM_REF);
     }
     return bpm;
   }
@@ -50,16 +48,32 @@ public:
       transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
         return (n != REST_NOTE ? notes.oct*12+scale[n%scale.size()] : n);
       });
-    
+  
     notes.amp = ampToVel(notes.amp);
     notes.dur = parseDurPattern(fn);
-    
+  
     transform(notes.dur.begin(), notes.dur.end(), notes.dur.begin(), [&](int d){
       return duration[d]/bpmRatio();
     });
+
+    return notes;
+  }
+  
+  static Notes midiNoteExcludeDur(const function<Notes(void)>& fn) {
+    Notes notes = fn();
+    protoNotes = notes; // Notes object before converting to MIDI spec
+    
+    if (notes.oct != 1) // MIDI note value depends on octave specification
+      transform(notes.notes.begin(), notes.notes.end(), notes.notes.begin(), [&](int n){
+        return (n != REST_NOTE ? notes.oct*12+scale[n%scale.size()] : n);
+      });
+    
+    notes.amp = ampToVel(notes.amp);
+    notes.dur = {};
     
     return notes;
   }
+
   
   static vector<CC> midiCC(const vector<function<CC()>>& ccsFn) {
     vector<CC> ccValues;
@@ -126,4 +140,4 @@ vector<int> Generator::scale = {}; // Chromatic scale as default
 float Generator::bpm = BPM_REF;
 Notes Generator::protoNotes = {{0},0.,{1},1};
 
-unordered_map<int8_t,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,333333),noteDurMs(16,250000),noteDurMs(6,166666),noteDurMs(32,125000),noteDurMs(64,62500)};
+unordered_map<int8_t,int> Generator::duration{noteDurMs(1,4000000),noteDurMs(2,2000000),noteDurMs(4,1000000),noteDurMs(8,500000),noteDurMs(3,666666),noteDurMs(16,250000),noteDurMs(6,333333),noteDurMs(32,125000),noteDurMs(64,62500)};
