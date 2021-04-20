@@ -23,7 +23,7 @@ using noteDurMs = std::pair<int,float>;
 class Generator {
 public:
   
-  static float barDurMs() {
+  static float barDur() {
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
   
@@ -32,7 +32,7 @@ public:
     return {bpm/BPM_REF};
   }
   
-  static float barDurMs(float _bpm) {
+  static float barDur(float _bpm) {
     if (_bpm > 0) {
       bpm = _bpm;
       return BAR_DUR_REF/(bpm/BPM_REF);
@@ -101,7 +101,7 @@ public:
     for (int d : notes.dur)
       accDurTotal += duration[d]/(bpm/BPM_REF);
     
-    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset)
+    if (accDurTotal >= barDur()-offset && accDurTotal <= barDur()+offset)
       return notes.dur;
     // ---
     
@@ -118,7 +118,7 @@ public:
     for (int d : tempDur)
       accDurTotal += duration[d]/(bpm/BPM_REF);
     
-    if (accDurTotal >= barDurMs()-offset && accDurTotal <= barDurMs()+offset)
+    if (accDurTotal >= barDur()-offset && accDurTotal <= barDur()+offset)
       return tempDur;
     // ---
     

@@ -19,7 +19,7 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
-#include <iomanip> // std::flush
+//#include <iomanip> // std::flush
 //#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/mnotation.h"
 #include "/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.h"
 #include "/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.h"
@@ -60,7 +60,7 @@ using label = int;
 const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
 const uint16_t NUM_TASKS = 4;
 const float BAR_DUR_REF = 4000000; // microseconds
-const int8_t TASKPOOL_SIZE = 64;
+const int8_t JOB_QUEUE_SIZE = 64;
 const float BPM_REF = 60;
 const int   REST_NOTE = 127;
 const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
@@ -71,7 +71,7 @@ void pushSJob(vector<Instrument>& insts) {
   int id = 0;
     
   while (TaskPool<SJob>::isRunning) {
-    if (TaskPool<SJob>::jobs.size() < TASKPOOL_SIZE) {
+    if (TaskPool<SJob>::jobs.size() < JOB_QUEUE_SIZE) {
       id = id%insts.size();
       j.id = id;
       j.job = &*insts.at(id).f;
@@ -89,7 +89,7 @@ void pushCCJob(vector<Instrument>& insts) {
   int id = 0;
   
   while (TaskPool<CCJob>::isRunning) {
-    if (TaskPool<CCJob>::jobs.size() < TASKPOOL_SIZE) {
+    if (TaskPool<CCJob>::jobs.size() < JOB_QUEUE_SIZE) {
       id = id%insts.size();
       j.id = id;
       j.job = &*insts.at(id).ccs;
@@ -102,6 +102,7 @@ void pushCCJob(vector<Instrument>& insts) {
   }
 }
 
+// play function algorithm changes anyhting but duration has immediate effect
 inline Notes checkPlayingFunctionChanges(function<Notes()>& newFunc, function<Notes()>& currentFunc) {
   Notes playNotes;
   
@@ -119,10 +120,11 @@ inline Notes checkPlayingFunctionChanges(function<Notes()>& newFunc, function<No
 int taskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
   std::unique_lock<mutex> lock(TaskPool<SJob>::mtx,std::defer_lock);
-  long startTime, elapsedTime, deltaTime = 0, startTimeTotal, elapsedTimeTotal, yieldEvalTime = 0, yieldEvalParcelTime;
+  long barStartTime, barElapsedTime, barDeltaTime, noteStartTime, noteElapsedTime, noteDeltaTime, loopIterTime = 0;
   long t = 0;
-  float barDurMs;
+  double barDur;
   vector<unsigned char> noteMessage;
+  
   SJob j;
   Notes playNotes;
   function<Notes()> playFunc;
@@ -132,13 +134,13 @@ int taskDo(vector<Instrument>& insts) {
   noteMessage.push_back(0);
   noteMessage.push_back(0);
   noteMessage.push_back(0);
-  
+
   while (TaskPool<SJob>::isRunning) {
+    barStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+    barDur = Generator::barDur();
+    
     if (!TaskPool<SJob>::jobs.empty()) {
-      startTimeTotal = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();      
-
-      barDurMs = Generator::barDurMs();
-
+      
       TaskPool<SJob>::mtx.lock();
       j = TaskPool<SJob>::jobs.front();
       TaskPool<SJob>::jobs.pop_front();
@@ -146,18 +148,12 @@ int taskDo(vector<Instrument>& insts) {
       
       if (j.job) {
         playFunc = *j.job;
+        
         playNotes = Generator::midiNote(playFunc);
         durationsPattern = playNotes.dur;
         
-        Metro::syncInstTask(j.id);
-        
         for (auto& dur : durationsPattern) {
-          startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count()-deltaTime;
-
-          // All Notes params changes during playing bar allowed but duration
-          playNotes = checkPlayingFunctionChanges(*j.job,playFunc);
-          insts[j.id].out = Generator::protoNotes; // Notes object before converting to MIDI spec
-          
+          noteStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           for (auto& note : playNotes.notes) {
             noteMessage[0] = 0x90+j.id;
             noteMessage[1] = note;
@@ -165,47 +161,44 @@ int taskDo(vector<Instrument>& insts) {
             midiOut.sendMessage(&noteMessage);
           }
           
+          playNotes = Generator::midiNoteExcludeDur(playFunc);
           insts.at(j.id).step++;
           
           if (!TaskPool<SJob>::isRunning) goto finishTask;
-        
-          yieldEvalParcelTime = static_cast<long>(floor(dur/barDurMs*Metro::minWaitingTime()));
-
-          elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           
-          t = dur-(elapsedTime-startTime+yieldEvalParcelTime);
-          t = t >= 0 ? t : 0; // prevent negative values for durstion time
+          t = dur-round(dur/barDur*Metro::instsWaitingTimes.at(j.id)+loopIterTime);
+          t = (t > 0 && t < barDur) ? t : dur; // prevent negative values for duration
           
           this_thread::sleep_for(chrono::microseconds(t));
           
-          startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           for (auto& note : playNotes.notes) {
             noteMessage[0] = 0x80+j.id;
             noteMessage[1] = note;
             noteMessage[2] = 0;
             midiOut.sendMessage(&noteMessage);
           }
-          elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-          deltaTime = elapsedTime-startTime;
+          
+          noteElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+          noteDeltaTime = noteElapsedTime-noteStartTime;
+          loopIterTime = noteDeltaTime > t ? noteDeltaTime-t : 0;
         }
-      
-        elapsedTimeTotal = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        yieldEvalTime = elapsedTimeTotal-startTimeTotal-static_cast<long>(barDurMs);
-      
-        Metro::instsWaitingTimes.at(j.id) = (yieldEvalTime > 0 ? yieldEvalTime : Metro::minWaitingTime());
+        Metro::syncInstTask(j.id);
       }
     }
+    
+    barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+    barDeltaTime = barElapsedTime-barStartTime;
+    Metro::instsWaitingTimes.at(j.id) = barDeltaTime > barDur ? barDeltaTime-barDur : 0;
   }
   
   finishTask:
   // silencing playing notes before task finishing
   for (auto& note : playNotes.notes) {
-    noteMessage[0] = 128+j.id;
+    noteMessage[0] = 0x80+j.id;
     noteMessage[1] = note;
     noteMessage[2] = 0;
     midiOut.sendMessage(&noteMessage);
   }
-  
   return j.id;
 }
 
@@ -225,27 +218,29 @@ int ccTaskDo(vector<Instrument>& insts) {
   
   while (TaskPool<CCJob>::isRunning) {
     if (!TaskPool<CCJob>::jobs.empty()) {
-    
       startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      
       TaskPool<CCJob>::mtx.lock();
       j = TaskPool<CCJob>::jobs.front();
       TaskPool<CCJob>::jobs.pop_front();
       TaskPool<CCJob>::mtx.unlock();
       
-      ccs = *j.job;
-      ccComputed = Generator::midiCC(ccs);
+      if (j.job) {
+        ccs = *j.job;
+        ccComputed = Generator::midiCC(ccs);
     
-      for (auto &cc : ccComputed) {
-        ccMessage[0] = 176+j.id;
-        ccMessage[1] = cc.ch;
-        ccMessage[2] = cc.value;
-        midiOut.sendMessage(&ccMessage);
+        for (auto &cc : ccComputed) {
+          ccMessage[0] = 0xB0+j.id;
+          ccMessage[1] = cc.ch;
+          ccMessage[2] = cc.value;
+          midiOut.sendMessage(&ccMessage);
+        }
+      
+        insts.at(j.id).ccStep++;
+      
+        elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime)));
       }
-      
-      insts.at(j.id).ccStep++;
-      
-      elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-      this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime)));
     }
   }
   
@@ -255,7 +250,7 @@ int ccTaskDo(vector<Instrument>& insts) {
 vector<Instrument> insts;
 
 void bpm(int _bpm) {
-  Generator::barDurMs(_bpm);
+  Generator::barDur(_bpm);
 }
 
 void bpm() {
@@ -310,16 +305,14 @@ void wide() {
   if (TaskPool<SJob>::isRunning) {
     std::thread([&](){
       TaskPool<SJob>::numTasks = NUM_TASKS;
-       TaskPool<CCJob>::numTasks = NUM_TASKS;
+      TaskPool<CCJob>::numTasks = NUM_TASKS;
       
       // init instruments
       for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
       
-      // Metro::setInst(insts.at(insts.size()-1)); // set last instrument as a metronome
-      Metro::insts = &insts;
       Metro::start();
-    
+      
       auto futPushSJob = async(launch::async,pushSJob,ref(insts));
       auto futPushCCJob = async(launch::async,pushCCJob,ref(insts));
       
@@ -328,8 +321,8 @@ void wide() {
         TaskPool<SJob>::tasks.push_back(async(launch::async,taskDo,ref(insts)));
       
       // init cc task pool
-        for (int i = 0;i < TaskPool<CCJob>::numTasks;++i)
-         TaskPool<CCJob>::tasks.push_back(async(launch::async,ccTaskDo,ref(insts)));
+      for (int i = 0;i < TaskPool<CCJob>::numTasks;++i)
+        TaskPool<CCJob>::tasks.push_back(async(launch::async,ccTaskDo,ref(insts)));
     }).detach();
     
     cout << PROJ_NAME << " on <((()))>" << endl;
@@ -359,9 +352,9 @@ void off() {
   TaskPool<SJob>::stopRunning();
   TaskPool<CCJob>::stopRunning();
   
-  insts.clear();
-  
   Metro::stop();
+  
+  insts.clear();
   
   cout << PROJ_NAME << " off <>" << endl;
 }
@@ -369,4 +362,3 @@ void off() {
 int main() {
   return 0;
 }
-

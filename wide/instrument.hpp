@@ -106,10 +106,9 @@ struct Metro {
 public:
   static uint32_t step;
   static bool on;
-  static atomic<bool> yieldInstTask;
-  static std::vector<Instrument> *insts;
+  static std::future<int> metronomeTask;
   static std::vector<long> instsWaitingTimes;
-  static unsigned long startTime, elapsedTime, barStartTime;
+  static unsigned long startTime, elapsedTime;
   
   static void setTick(int _tickPrecision) {
     tickPrecision = _tickPrecision;
@@ -118,44 +117,45 @@ public:
   static uint8_t tick() {
     return tickPrecision;
   }
-  
-  static void start() {
+
+  static int metronome() {
     on = true;
     long t = 0;
     
-    std::thread([&](){
-      while (on) {
-        startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        
-        if (step == 0)
-          yieldInstTask.store(false);
-        
-        step++;
-        
-        elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        t = static_cast<unsigned int>((Generator::barDurMs())/tickPrecision)-(elapsedTime-startTime);
-        t = (t >= 0 ? t : 0);
-        
-        this_thread::sleep_for(chrono::microseconds(t));
-      }
-    }).detach();
+    while (on) {
+      startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+
+      step++;
+      
+      elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      t = static_cast<unsigned int>((Generator::barDur())/tickPrecision)-(elapsedTime-startTime);
+      t = (t > 0 ? t : 0);
+      
+      this_thread::sleep_for(chrono::microseconds(t));
+    }
+    return 0;
+  }
+  
+  static void start() {
+    metronomeTask = async(launch::async, Metro::metronome);
   }
   
   static void stop() {
     on = false;
-    step = 0;
+    metronomeTask.get();
     TaskPool<SJob>::yieldTaskCntr.store(0);
+    step = 0;
   }
   
   // will attempt to metro sync SJobs' tasks/threads
-  static int syncInstTask(int taskId) {
+  static int syncInstTask(int instId) {
     TaskPool<SJob>::yieldTaskCntr.store(++TaskPool<SJob>::yieldTaskCntr);
     
     while (TaskPool<SJob>::yieldTaskCntr.load() >= 1 && TaskPool<SJob>::yieldTaskCntr.load() <= NUM_TASKS) {
       this_thread::yield();
       if (TaskPool<SJob>::yieldTaskCntr.load() == NUM_TASKS) TaskPool<SJob>::yieldTaskCntr.store(0);
     }
-    return taskId;
+    return instId;
   }
 
   static long minWaitingTime() {
@@ -163,6 +163,25 @@ public:
     return (minWait < 0 ? 0 : minWait);
   }
   
+  static float avgWaitingTime(int instId) {
+    float sum = 0.f;
+    float avgWait = std::accumulate(instsWaitingTimes.begin(),instsWaitingTimes.end(),sum)/instsWaitingTimes.size();
+    
+    if (instsWaitingTimes.at(instId) >= avgWait)
+      return instsWaitingTimes.at(instId)-avgWait;
+    else
+      return 0.f;
+  }
+  
+  static float maxWaitingTime() {
+    long maxWait = *max_element(instsWaitingTimes.begin(),instsWaitingTimes.end());
+    return (maxWait < 0 ? 0 : maxWait);
+  }
+  
+  static float instWaitingTime(int instId) {
+    return instsWaitingTimes.at(instId);
+  }
+
   //FIXME: this range conversion sometimes returns the same value for two contiguous steps
   static uint32_t sync(int timeSignature) {
     return floor(step*(timeSignature/static_cast<float>(tickPrecision)));
@@ -179,7 +198,6 @@ private:
 uint16_t Metro::tickPrecision = 64;
 uint32_t Metro::step = 0;
 bool Metro::on = true;
-atomic<bool> Metro::yieldInstTask(true); // on start sync
-unsigned long Metro::startTime = 0, Metro::elapsedTime = 0, Metro::barStartTime = 0;
-std::vector<Instrument> *Metro::insts = nullptr;
+std::future<int> Metro::metronomeTask;
+unsigned long Metro::startTime = 0, Metro::elapsedTime = 0;
 std::vector<long> Metro::instsWaitingTimes(NUM_TASKS,0);
