@@ -22,7 +22,6 @@ using noteDurMs = std::pair<int,float>;
 
 class Generator {
 public:
-  
   static float barDur() {
     return BAR_DUR_REF/(bpm/BPM_REF);
   }
