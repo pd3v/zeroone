@@ -1,3 +1,11 @@
+## 0.4.5
+
+. New helper **rnd10**,  **rnd25**, **rnd50**, **rnd75**, **thisthator** functions
+
+. Improved sync
+
+__
+
 ## 0.3.2
 
 
