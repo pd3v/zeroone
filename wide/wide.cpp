@@ -19,24 +19,13 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
-//#include <iomanip> // std::flush
-//#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/mnotation.h"
-#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.h"
-#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.h"
-#include "/Volumes/Data/Xcode Projects/mnotation/mnotation/chords.h"
-#include "/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.h"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #elif __APPLE__
   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
-//  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/mnotation.h")
-  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/intervals.cpp")
-  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/scales.cpp")
-  #pragma cling load("/Volumes/Data/Xcode Projects/mnotation/mnotation/chords.cpp")
-  #pragma cling load("/Volumes/Data/Xcode Projects/chronometer/chronometer/chronometer.cpp")
 #elif __unix__
-  #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+  #pragma cling load("$LD_LIBRAsRY_PATH/librtmidi.dylib")
 #endif
 
 using namespace std;
@@ -60,9 +49,11 @@ using label = int;
 const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
 const uint16_t NUM_TASKS = 4;
 const float BAR_DUR_REF = 4000000; // microseconds
-const int8_t JOB_QUEUE_SIZE = 64;
+const uint8_t JOB_QUEUE_SIZE = 64;
+const int CC_FREQ = 10; // Hz
+constexpr uint8_t CC_RESOLUTION = 1000/CC_FREQ; //milliseconds
 const float BPM_REF = 60;
-const int   REST_NOTE = 127;
+const int REST_NOTE = 127;
 const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
 const vector<function<CC()>> NO_CTRL = {};
 
@@ -102,7 +93,7 @@ void pushCCJob(vector<Instrument>& insts) {
   }
 }
 
-// play function algorithm changes anyhting but duration has immediate effect
+// play function algorithm changes have immediate effect on every note parameter but duration
 inline Notes checkPlayingFunctionChanges(function<Notes()>& newFunc, function<Notes()>& currentFunc) {
   Notes playNotes;
   
@@ -155,7 +146,7 @@ int taskDo(vector<Instrument>& insts) {
         for (auto& dur : durationsPattern) {
           noteStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           for (auto& note : playNotes.notes) {
-            noteMessage[0] = 0x90+j.id;
+            noteMessage[0] = 144+j.id;
             noteMessage[1] = note;
             noteMessage[2] = (note != REST_NOTE && !insts[j.id].isMuted()) ? playNotes.amp : 0;
             midiOut.sendMessage(&noteMessage);
@@ -167,12 +158,12 @@ int taskDo(vector<Instrument>& insts) {
           if (!TaskPool<SJob>::isRunning) goto finishTask;
           
           t = dur-round(dur/barDur*Metro::instsWaitingTimes.at(j.id)+loopIterTime);
-          t = (t > 0 && t < barDur) ? t : dur; // prevent negative values for duration
+          t = (t > 0 && t < barDur) ? t : dur; // prevent negative values for duration and thread overrun
           
           this_thread::sleep_for(chrono::microseconds(t));
           
           for (auto& note : playNotes.notes) {
-            noteMessage[0] = 0x80+j.id;
+            noteMessage[0] = 128+j.id;
             noteMessage[1] = note;
             noteMessage[2] = 0;
             midiOut.sendMessage(&noteMessage);
@@ -182,19 +173,20 @@ int taskDo(vector<Instrument>& insts) {
           noteDeltaTime = noteElapsedTime-noteStartTime;
           loopIterTime = noteDeltaTime > t ? noteDeltaTime-t : 0;
         }
-        Metro::syncInstTask(j.id);
       }
+      Metro::syncInstTask(j.id);
     }
     
     barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
     barDeltaTime = barElapsedTime-barStartTime;
+    
     Metro::instsWaitingTimes.at(j.id) = barDeltaTime > barDur ? barDeltaTime-barDur : 0;
   }
   
   finishTask:
   // silencing playing notes before task finishing
   for (auto& note : playNotes.notes) {
-    noteMessage[0] = 0x80+j.id;
+    noteMessage[0] = 128+j.id;
     noteMessage[1] = note;
     noteMessage[2] = 0;
     midiOut.sendMessage(&noteMessage);
@@ -230,7 +222,7 @@ int ccTaskDo(vector<Instrument>& insts) {
         ccComputed = Generator::midiCC(ccs);
     
         for (auto &cc : ccComputed) {
-          ccMessage[0] = 0xB0+j.id;
+          ccMessage[0] = 176+j.id;
           ccMessage[1] = cc.ch;
           ccMessage[2] = cc.value;
           midiOut.sendMessage(&ccMessage);
@@ -239,7 +231,7 @@ int ccTaskDo(vector<Instrument>& insts) {
         insts.at(j.id).ccStep++;
       
         elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-        this_thread::sleep_for(chrono::milliseconds(100-(elapsedTime-startTime)));
+        this_thread::sleep_for(chrono::milliseconds(CC_RESOLUTION-(elapsedTime-startTime)));
       }
     }
   }
@@ -349,10 +341,9 @@ void on(){
 }
 
 void off() {
+  Metro::stop();
   TaskPool<SJob>::stopRunning();
   TaskPool<CCJob>::stopRunning();
-  
-  Metro::stop();
   
   insts.clear();
   
