@@ -13,6 +13,8 @@
 #include <iterator>
 #include <time.h>
 
+extern const int REST_NOTE;
+extern const int CC_FREQ;
 const float PI = 3.14159265;
 
 template <typename T>
@@ -87,7 +89,7 @@ vector<T> rndw(T min,T max,T repeatNum,int weight,int size=10) {
 }
 
 template <typename T=int>
-T rnd25(T min,T max,T repeatNum,int size=10) {
+T rnd75(T min,T max,T repeatNum,int size=10) {
   return rndw(min,max,repeatNum,25,size).at(0);
 }
 
@@ -97,9 +99,26 @@ T rnd50(T min,T max,T repeatNum,int size=10) {
 }
 
 template <typename T=int>
-T rnd75(T min,T max,T repeatNum,int size=10) {
+T rnd25(T min,T max,T repeatNum,int size=10) {
   return rndw(min,max,repeatNum,75,size).at(0);
 }
+
+template <typename T=int>
+T rnd10(T min,T max,T repeatNum,int size=10) {
+  return rndw(min,max,repeatNum,90,size).at(0);
+}
+
+
+// TODO: A draft for a in sync randomizing function. As is, is returning a value per beat
+auto rndsync = [rndValue=int(0),evaluated=bool(false),_step=long(0)](int min, int max,unsigned long step,unsigned short countTurn=1) mutable {
+  
+  if (_step%CC_FREQ == 0)
+    rndValue = rnd(min,max);
+  
+  ++_step;
+  
+  return rndValue;
+};
 
 int mod(int countTurn) {
   return countTurn != 0 ? Metro::sync(4)%countTurn : 0;
