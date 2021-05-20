@@ -39,8 +39,8 @@ struct TaskPool {
     for (auto& t : tasks)
       t.get();
     
-    jobs.clear();
     tasks.clear();
+    jobs.clear();
   }
 };
 
