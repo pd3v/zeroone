@@ -119,7 +119,6 @@ public:
   }
 
   static int metronome() {
-    on = true;
     long t = 0;
     
     while (on) {
@@ -133,11 +132,13 @@ public:
       
       this_thread::sleep_for(chrono::microseconds(t));
     }
+    
     return 0;
   }
   
   static void start() {
-    metronomeTask = async(launch::async, Metro::metronome);
+    on = true;
+    metronomeTask = async(launch::async,Metro::metronome);
   }
   
   static void stop() {
@@ -151,10 +152,11 @@ public:
   static int syncInstTask(int instId) {
     TaskPool<SJob>::yieldTaskCntr.store(++TaskPool<SJob>::yieldTaskCntr);
     
-    while (TaskPool<SJob>::yieldTaskCntr.load() >= 1 && TaskPool<SJob>::yieldTaskCntr.load() <= NUM_TASKS) {
+    while ((TaskPool<SJob>::yieldTaskCntr.load() >= 1 && TaskPool<SJob>::yieldTaskCntr.load() <= NUM_TASKS) && on) {
       this_thread::yield();
-      if (TaskPool<SJob>::yieldTaskCntr.load() == NUM_TASKS) TaskPool<SJob>::yieldTaskCntr.store(0);
+      if (TaskPool<SJob>::yieldTaskCntr.load() >= NUM_TASKS) TaskPool<SJob>::yieldTaskCntr.store(0);
     }
+    
     return instId;
   }
 
@@ -197,7 +199,7 @@ private:
 
 uint16_t Metro::tickPrecision = 64;
 uint32_t Metro::step = 0;
-bool Metro::on = true;
+bool Metro::on = false;
 std::future<int> Metro::metronomeTask;
 unsigned long Metro::startTime = 0, Metro::elapsedTime = 0;
 std::vector<long> Metro::instsWaitingTimes(NUM_TASKS,0);
