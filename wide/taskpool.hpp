@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include <deque>
 #include <mutex>
@@ -17,6 +18,12 @@ extern const float BPM_REF;
 extern const uint16_t NUM_TASKS;
 
 template <typename T>
+struct Job {
+  int id;
+  std::function<T()>* job;
+};
+
+template <typename T>
 struct TaskPool {
   static std::vector<std::future<int>> tasks;
   static uint16_t numTasks;
@@ -24,6 +31,7 @@ struct TaskPool {
   static bool isRunning;
   static std::mutex mtx;
   static std::atomic<uint16_t> yieldTaskCntr;
+  static Job<T> job;
   
   static void stopRunning() {
     isRunning = false;
@@ -31,8 +39,8 @@ struct TaskPool {
     for (auto& t : tasks)
       t.get();
     
-    jobs.clear();
     tasks.clear();
+    jobs.clear();
   }
 };
 
@@ -54,12 +62,15 @@ std::atomic<uint16_t> TaskPool<T>::yieldTaskCntr(0);
 template <typename T>
 bool TaskPool<T>::isRunning = true;
 
-struct SJob {
+template <typename T>
+Job<T> TaskPool<T>::job;
+
+struct SJob : public Job<Notes> {
   int id;
   std::function<Notes()>* job;
 };
 
-struct CCJob {
+struct CCJob : public Job<CC> {
   int id;
   std::vector<std::function<CC()>>* job;
 };
