@@ -341,9 +341,9 @@ void on(){
 
 void off() {
   Metro::stop();
+  
   TaskPool<SJob>::stopRunning();
   TaskPool<CCJob>::stopRunning();
-  Metro::stop();
   
   insts.clear();
   
