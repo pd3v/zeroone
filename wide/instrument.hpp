@@ -21,20 +21,53 @@ using namespace std;
 
 class Instrument {
 public:
-  Instrument(int id) {
-    this->id = id;
-    _ch = id;
+  Instrument(int id) : id(id),_ch(id) {}
+  
+  void play(function<Notes(void)> _f) {
+    isWritingPlayFunc->store(true);
+    if (!Generator::parseDurPattern(_f).empty())
+      *f = _f;
+    isWritingPlayFunc->store(false);
   }
   
-  void play(function<Notes(void)> fn) {
-    if (!Generator::parseDurPattern(fn).empty())
-      *f = fn;
+  // notes function and cc packs function combined
+  template <typename T,typename... U>
+  void play(function<Notes(void)> _f,T fcc1,U... fccn) {
+    play(_f);
+    if (_recurCCStart) {
+      _ccs.clear();
+      _recurCCStart = false;
+    }
+    _ccs.emplace_back(fcc1);
+    ctrl(fccn...);
+  }
+  
+  void ctrl(){
+    isWritingCCFunc->store(true);
+    *ccs = _ccs;
+    isWritingCCFunc->store(false);
+    _recurCCStart = true;
+  }
+  
+  template <typename T,typename... U>
+  void ctrl(T fcc1,U... fccn) {
+    if (_recurCCStart) {
+      _ccs.clear();
+      _recurCCStart = false;
+    }
+    _ccs.emplace_back(fcc1);
+    ctrl(fccn...);
+  }
+  
+  void noctrl() {
+    ccs->clear();
+    _ccs.clear();
   }
   
   vector<int> outNotes() {
     return out.notes;
   }
-
+  
   int outNotes(int notePos) {
     return out.notes.at(notePos);
   }
@@ -55,27 +88,6 @@ public:
     return out.oct;
   }
   
-  void ctrl(){
-    *ccs = _ccs;
-    recurCCStart = true;
-  }
-  
-  template <typename T,typename... U>
-  void ctrl(T fn1,U... fn2) {
-    if (recurCCStart) {
-      _ccs.clear();
-      recurCCStart = false;
-    }
-    
-    _ccs.push_back(fn1);
-    ctrl(fn2...);
-  }
-  
-  void noctrl() {
-    ccs->clear();
-    _ccs.clear();
-  }
-  
   void mute() {
     _mute = true;
   }
@@ -93,10 +105,12 @@ public:
   shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE);
   shared_ptr<vector<function<CC(void)>>> const ccs = make_shared<vector<function<CC(void)>>>(NO_CTRL);
   Notes out = {{0},0.,{1},1};
+  std::unique_ptr<std::atomic<bool>> isWritingPlayFunc = std::make_unique<std::atomic<bool>>(false);
+  std::unique_ptr<std::atomic<bool>> isWritingCCFunc = std::make_unique<std::atomic<bool>>(false);
 private:
   int _ch;
   bool _mute = false;
-  bool recurCCStart = true;
+  bool _recurCCStart = true;
   vector<function<CC()>> _ccs{};
 };
 
@@ -118,7 +132,7 @@ public:
   }
 
   static int metronome() {
-    long t = 0;
+    unsigned long t = 0;
     
     while (on) {
       startTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
@@ -126,7 +140,7 @@ public:
       step++;
       
       elapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-      t = static_cast<unsigned int>((Generator::barDur())/tickPrecision)-(elapsedTime-startTime);
+      t = static_cast<unsigned long>((Generator::barDur())/tickPrecision)-(elapsedTime-startTime);
       t = (t > 0 ? t : 0);
       
       this_thread::sleep_for(chrono::microseconds(t));
