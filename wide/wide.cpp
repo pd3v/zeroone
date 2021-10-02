@@ -19,13 +19,29 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
+//#include "intervals.h"
+//#include "scales.h"
+//#include "chords.h"
+//#include "tones.hpp"
+//#include "constexprArray.hpp"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #elif __APPLE__
   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
+  /*
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/intervals.h")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/intervals.cpp")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/scales.h")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/scales.cpp")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/chords.h")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/chords.cpp")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/constexprArray.hpp")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/tones.hpp")
+   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/phrases.hpp")
+  */
 #elif __unix__
-  #pragma cling load("$LD_LIBRAsRY_PATH/librtmidi.dylib")
+  #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
 
 using namespace std;
@@ -38,11 +54,16 @@ using durT = rhythmType;
 using label = int;
 
 #define i(ch) (insts[(ch-1)])
+#define i1 (insts[0])
+#define i2 (insts[1])
+#define i3 (insts[2])
+#define i4 (insts[3])
+#define i5 (insts[4])
 #define isync(ch) (insts[ch-1].step)
 #define ccsync(ch) (insts[ch-1].ccStep)
 #define f(x) [&](){return x;}
-#define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}     // note's absolute value setting, no octave parameter
-#define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}  // note's setting with octave parameter
+#define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}       // note's absolute value setting, no octave parameter
+#define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}    // note's setting with octave parameter
 #define cc(ch,value) [&]()->CC{return (CC){ch,value};}
 #define bar Metro::sync(Metro::metroPrecision)
 
@@ -64,12 +85,14 @@ void pushSJob(vector<Instrument>& insts) {
   while (TaskPool<SJob>::isRunning) {
     if (TaskPool<SJob>::jobs.size() < JOB_QUEUE_SIZE) {
       id = id%insts.size();
-      j.id = id;
-      j.job = &*insts.at(id).f;
+      if (!insts.at(id).isWritingPlayFunc->load()) {
+        j.id = id;
+        j.job = &*insts.at(id).f;
       
-      TaskPool<SJob>::jobs.push_back(j);
+        TaskPool<SJob>::jobs.push_back(j);
       
-      id++;
+        id++;
+      }
     }
     this_thread::sleep_for(chrono::milliseconds(5));
   }
@@ -82,12 +105,14 @@ void pushCCJob(vector<Instrument>& insts) {
   while (TaskPool<CCJob>::isRunning) {
     if (TaskPool<CCJob>::jobs.size() < JOB_QUEUE_SIZE) {
       id = id%insts.size();
-      j.id = id;
-      j.job = &*insts.at(id).ccs;
+      if (!insts.at(id).isWritingCCFunc->load()) {
+        j.id = id;
+        j.job = &*insts.at(id).ccs;
       
-      TaskPool<CCJob>::jobs.push_back(j);
+        TaskPool<CCJob>::jobs.push_back(j);
       
-      id++;
+        id++;
+      }
     }
     this_thread::sleep_for(chrono::milliseconds(5));
   }
@@ -141,6 +166,8 @@ int taskDo(vector<Instrument>& insts) {
         
         playNotes = Generator::midiNote(playFunc);
         durationsPattern = playNotes.dur;
+        
+        insts[j.id].out = Generator::protoNotes;
         
         for (auto& dur : durationsPattern) {
           noteStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
@@ -301,7 +328,7 @@ void wide() {
       // init instruments
       for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
-      
+    
       Metro::start();
       
       auto futPushSJob = async(launch::async,pushSJob,ref(insts));
