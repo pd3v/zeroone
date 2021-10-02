@@ -19,27 +19,11 @@
 #include "instrument.hpp"
 #include "generator.hpp"
 #include "expression.hpp"
-//#include "intervals.h"
-//#include "scales.h"
-//#include "chords.h"
-//#include "tones.hpp"
-//#include "constexprArray.hpp"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #elif __APPLE__
   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
-  /*
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/intervals.h")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/intervals.cpp")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/scales.h")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/scales.cpp")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/chords.h")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/chords.cpp")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/constexprArray.hpp")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/tones.hpp")
-   #pragma cling load("/Volumes/Data/Xcode Projects/diatonic/diatonic/phrases.hpp")
-  */
 #elif __unix__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
