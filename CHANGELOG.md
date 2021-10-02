@@ -1,3 +1,16 @@
+## 0.4.6
+. New beat sync resettable random numbers functions - **rndsync** and **rndbunchsync** 
+
+. Simpler instruments' identifications: i1, i2, ...,i5  adding to the already existent i(1), i(2), ..., i(5)
+
+. Possible to set CC and note(s) within the instrument's **play** function definition
+
+. **rotl** and **rotr** beat sync resettable
+
+. Put back instruments' playing out notes feature
+
+__
+
 ## 0.4.5
 
 . New helper **rnd10**,  **rnd25**, **rnd50**, **rnd75**, **thisthator** functions
