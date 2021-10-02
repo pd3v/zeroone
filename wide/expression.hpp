@@ -11,11 +11,11 @@
 #include <algorithm>
 #include <type_traits>
 #include <iterator>
-#include <time.h>
 
 extern const int REST_NOTE;
-extern const int CC_FREQ;
 const float PI = 3.14159265;
+
+auto x = REST_NOTE;
 
 template <typename T>
 T rnd(const T& max,typename enable_if<!is_floating_point<T>::value,void*>::type() = nullptr) {
@@ -27,8 +27,9 @@ typename std::common_type<T,U>::type range(const T& value,const T& max, const U&
   return max != 0 ? static_cast<float>(value)/max*toMax : 0;
 }
 
-template <typename T,typename U>
-typename std::common_type<T,U>::type range(const T& value,const T& max,const U& toMin,const U& toMax) {
+// If range is to convert to MIDI values, toMin and toMax already set by default
+template <typename T,typename U=int>
+typename std::common_type<T,U>::type range(const T& value,const T& max,const U& toMin=0,const U& toMax=127) {
   return max != 0 ? static_cast<float>(value)*(toMax-toMin)/max+toMin : 0;
 }
 
@@ -108,14 +109,20 @@ T rnd10(T min,T max,T repeatNum,int size=10) {
   return rndw(min,max,repeatNum,90,size).at(0);
 }
 
-
-// TODO: A draft for a in sync randomizing function. As is, is returning a value per beat
-auto rndsync = [rndValue=int(0),evaluated=bool(false),_step=long(0)](int min, int max,unsigned long step,unsigned short countTurn=1) mutable {
-  
-  if (_step%CC_FREQ == 0)
+auto rndsync = [rndValue=int(0),lastStep=uint16_t(0)](int min,int max,uint16_t step=0) mutable {
+  if (step != lastStep) {
     rndValue = rnd(min,max);
+    lastStep = step;
+  }
   
-  ++_step;
+  return rndValue;
+};
+
+auto rndbunchsync = [rndValue=int(0),lastStep=uint16_t(0)](vector<int> bunch,uint16_t step=0) mutable {
+  if (step != lastStep) {
+    rndValue = rnd(bunch);
+    lastStep = step;
+  }
   
   return rndValue;
 };
@@ -359,14 +366,28 @@ int fast(T value,float xtimes) {
 
 template <typename T=int>
 vector<T> rotl(vector<T> v) {
-  rotate(v.begin(),v.begin()+mod(v.size(),Metro::sync(1)),v.end());
+  rotate(v.begin(),v.begin()+mod(v.size(),Metro::sync(4)),v.end());
+  
+  return v;
+}
+
+template <typename T=int>
+vector<T> rotl(vector<T> v, unsigned long step) {
+  rotate(v.begin(),v.begin()+mod(v.size(),step%v.size()),v.end());
   
   return v;
 }
 
 template <typename T=int>
 vector<T> rotr(vector<T> v) {
-  rotate(v.begin(),v.begin()+(v.size()-mod(v.size(),Metro::sync(1))),v.end());
+  rotate(v.begin(),v.begin()+(v.size()-mod(v.size(),Metro::sync(4))),v.end());
+  
+  return v;
+}
+
+template <typename T=int>
+vector<T> rotr(vector<T> v, unsigned long step) {
+  rotate(v.begin(),v.begin()+(v.size()-mod(v.size(),step%v.size())),v.end());
   
   return v;
 }
