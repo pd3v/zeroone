@@ -9,7 +9,7 @@
 
 . Put back instruments' playing out notes feature
 
-__
+____
 
 ## 0.4.5
 
@@ -17,7 +17,7 @@ __
 
 . Improved sync
 
-__
+___
 
 ## 0.3.2
 
@@ -32,7 +32,7 @@ __
 
 . Metronome on its own thread
 
-__
+____
  
 ## 0.3.1
 
@@ -49,7 +49,7 @@ __
 
 . Rename **istep** to **isync**, **ccstep** to **ccsync**, **whenMod** to **when**
 
-__
+___
 
 ## 0.3
  
@@ -66,6 +66,4 @@ __
 
 . **x**, stands for rest note
 
-__
-
-
+___
