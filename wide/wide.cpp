@@ -102,6 +102,7 @@ void pushCCJob(vector<Instrument>& insts) {
   }
 }
 
+// MARK: Not beeing used
 // play function algorithm changes have immediate effect on every note parameter but duration
 inline Notes checkPlayingFunctionChanges(function<Notes()>& newFunc, function<Notes()>& currentFunc) {
   Notes playNotes;
@@ -154,7 +155,10 @@ int taskDo(vector<Instrument>& insts) {
         insts[j.id].out = Generator::protoNotes;
         
         for (auto& dur : durationsPattern) {
+          playNotes = Generator::midiNoteExcludeDur(playFunc);
+          
           noteStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+          
           for (auto& note : playNotes.notes) {
             noteMessage[0] = 144+j.id;
             noteMessage[1] = note;
@@ -162,7 +166,6 @@ int taskDo(vector<Instrument>& insts) {
             midiOut.sendMessage(&noteMessage);
           }
           
-          playNotes = Generator::midiNoteExcludeDur(playFunc);
           insts.at(j.id).step++;
           
           if (!TaskPool<SJob>::isRunning) goto finishTask;
