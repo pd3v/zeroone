@@ -68,7 +68,6 @@ public:
       });
     
     notes.amp = ampToVel(notes.amp);
-    notes.dur = {};
     
     return notes;
   }
