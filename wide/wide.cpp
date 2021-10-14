@@ -43,13 +43,10 @@ using label = int;
 #define i3 (insts[2])
 #define i4 (insts[3])
 #define i5 (insts[4])
-#define isync(ch) (insts[ch-1].step)
-#define ccsync(ch) (insts[ch-1].ccStep)
 #define f(x) [&](){return x;}
 #define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}       // note's absolute value setting, no octave parameter
 #define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}    // note's setting with octave parameter
 #define cc(ch,value) [&]()->CC{return (CC){ch,value};}
-#define bar Metro::sync(Metro::metroPrecision)
 
 const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
 const uint16_t NUM_TASKS = 5;
@@ -262,8 +259,16 @@ void bpm() {
   cout << floor(Generator::bpm) << " bpm" << endl;
 }
 
-uint32_t sync(int dur) {
+uint32_t sync(uint8_t dur) {
   return Metro::sync(dur);
+}
+
+uint32_t isync(uint8_t ch) {
+  return insts.at(ch-1).step;
+}
+
+uint32_t ccsync(uint8_t ch) {
+  return insts.at(ch-1).ccStep;
 }
 
 uint32_t playhead() {
@@ -315,7 +320,7 @@ void wide() {
       // init instruments
       for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
-    
+      
       Metro::start();
       
       auto futPushSJob = async(launch::async,pushSJob,ref(insts));
@@ -338,11 +343,6 @@ void on(){
   if (!TaskPool<SJob>::isRunning) {
     bpm(60);
     
-    for (auto &inst : insts) {
-      inst.play(SILENCE);
-      inst.noctrl();
-    }
-
     TaskPool<SJob>::isRunning = true;
     TaskPool<CCJob>::isRunning = true;
     
