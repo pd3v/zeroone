@@ -4,30 +4,32 @@
 //  Created by @pd3v_
 //
 #include "wide.h"
-// #include <iostream>
-// #include <vector>
-// #include <functional>
-// #include <deque>
-// #include <thread>
-// #include <future>
-// #include <chrono>
-// #include <mutex>
-// #include <algorithm>
-// #include "RtMidi.h"
-// #include "notes.hpp"
-// #include "taskpool.hpp"
-// #include "instrument.hpp"
-// #include "generator.hpp"
-// #include "expression.hpp"
 
+/*
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <deque>
+#include <thread>
+#include <future>
+#include <chrono>
+#include <mutex>
+#include <algorithm>
+#include "RtMidi.h"
+#include "notes.hpp"
+#include "taskpool.hpp"
+#include "instrument.hpp"
+#include "generator.hpp"
+#include "expression.hpp"
+*/
 
-// #ifdef __linux__
-//   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
-// #elif __APPLE__
-//   #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
-// #elif __unix__
-//   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
-// #endif
+#ifdef __linux__
+  #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+#elif __APPLE__
+  #pragma cling load("$DYLD_LIBRARY_PATH/librtmidi.dylib")
+#elif __unix__
+  #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
+#endif
 
 using namespace std;
 
@@ -38,30 +40,33 @@ using ampT = double;
 using durT = rhythmType;
 using label = int;
 
+
+/*
 //#define i(ch) (insts[(ch-1)])
-//#define i1 (insts[0])
-// #define i2 (insts[1])
-// #define i3 (insts[2])
-// #define i4 (insts[3])
-// #define i5 (insts[4])
-// #define isync(ch) (insts[ch-1].step)
-// #define ccsync(ch) (insts[ch-1].ccStep)
-// #define f(x) [&](){return x;}
-// #define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}       // note's absolute value setting, no octave parameter
-// #define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}    // note's setting with octave parameter
-// #define cc(ch,value) [&]()->CC{return (CC){ch,value};}
+#define i1 (insts[0])
+#define i2 (insts[1])
+#define i3 (insts[2])
+#define i4 (insts[3])
+#define i5 (insts[4])
+#define isync(ch) (insts[ch-1].step)
+#define ccsync(ch) (insts[ch-1].ccStep)
+#define f(x) [&](){return x;}
+#define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}       // note's absolute value setting, no octave parameter
+#define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}    // note's setting with octave parameter
+#define cc(ch,value) [&]()->CC{return (CC){ch,value};}
 // #define bar Metro::sync(Metro::metroPrecision)
 
-// const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
-// //const uint16_t NUM_TASKS = 5;
-// const float BAR_DUR_REF = 4000000; // microseconds
-// const uint8_t JOB_QUEUE_SIZE = 64;
-// const int CC_FREQ = 10; // Hz
-// constexpr uint8_t CC_RESOLUTION = 1000/CC_FREQ; //milliseconds
-// const float BPM_REF = 60;
-// const int REST_NOTE = 127;
-// const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
-// const vector<function<CC()>> NO_CTRL = {};
+const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
+const uint16_t NUM_TASKS = 5;
+const float BAR_DUR_REF = 4000000; // microseconds
+const uint8_t JOB_QUEUE_SIZE = 64;
+const int CC_FREQ = 10; // Hz
+constexpr uint8_t CC_RESOLUTION = 1000/CC_FREQ; //milliseconds
+const float BPM_REF = 60;
+const int REST_NOTE = 127;
+const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
+const vector<function<CC()>> NO_CTRL = {};
+*/
 
 void pushSJob(vector<Instrument>& insts) {
   SJob j;
@@ -166,6 +171,7 @@ int taskDo(vector<Instrument>& insts) {
             noteMessage[1] = note;
             noteMessage[2] = (note != REST_NOTE && !insts[j.id].isMuted()) ? playNotes.amp : 0;
             midiOut.sendMessage(&noteMessage);
+            // cout << note << flush << " ";
           }
           
           insts.at(j.id).step++;
@@ -308,18 +314,9 @@ void stop() {
   noctrl();
 }
 
-int instson() {
-  return insts.size();
+Instrument& i(int id) {
+  return insts.at(id-1);
 }
-
-int isinst(int id) {
-  return insts.at(id).id;
-}
-
-Instrument& isinstaddress(int id) {
-  return insts.at(id);
-}
-
 void wide() {
   if (TaskPool<SJob>::isRunning) {
     std::thread([&](){
@@ -327,10 +324,8 @@ void wide() {
       TaskPool<CCJob>::numTasks = NUM_TASKS;
       
       // init instruments
-      for (int id = 0;id < TaskPool<SJob>::numTasks;++id) {
+      for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
-        // ah.push_back(id);
-      }
 
       Metro::start();
       
@@ -347,9 +342,6 @@ void wide() {
     }).detach();
     
     cout << PROJ_NAME << " on <((()))>" << endl;
-
-    for (auto& i : insts)
-      std::cout << i.id << " " << std::flush;
   }
 }
 
@@ -357,11 +349,6 @@ void on(){
   if (!TaskPool<SJob>::isRunning) {
     bpm(60);
     
-    for (auto &inst : insts) {
-      inst.play(SILENCE);
-      inst.noctrl();
-    }
-
     TaskPool<SJob>::isRunning = true;
     TaskPool<CCJob>::isRunning = true;
     
@@ -382,6 +369,10 @@ void off() {
   
   cout << PROJ_NAME << " off <>" << endl;
 }
+
+// void isloaded() {
+//   std::cout << __FUNCTION__ << std::endl;
+// }
 
 int main() {
   return 0;
