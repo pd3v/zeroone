@@ -37,12 +37,11 @@ using ampT = double;
 using durT = rhythmType;
 using label = int;
 
-#define i(ch) (insts[(ch-1)])
-#define i1 (insts[0])
-#define i2 (insts[1])
-#define i3 (insts[2])
-#define i4 (insts[3])
-#define i5 (insts[4])
+#define i1 insts[0]
+#define i2 insts[1]
+#define i3 insts[2]
+#define i4 insts[3]
+#define i5 insts[4]
 #define f(x) [&](){return x;}
 #define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}       // note's absolute value setting, no octave parameter
 #define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}    // note's setting with octave parameter
@@ -61,7 +60,7 @@ const vector<function<CC()>> NO_CTRL = {};
 
 void pushSJob(vector<Instrument>& insts) {
   SJob j;
-  int id = 0;
+  uint8_t id = 0;
     
   while (TaskPool<SJob>::isRunning) {
     if (TaskPool<SJob>::jobs.size() < JOB_QUEUE_SIZE) {
@@ -81,7 +80,7 @@ void pushSJob(vector<Instrument>& insts) {
 
 void pushCCJob(vector<Instrument>& insts) {
   CCJob j;
-  int id = 0;
+  uint8_t id = 0;
   
   while (TaskPool<CCJob>::isRunning) {
     if (TaskPool<CCJob>::jobs.size() < JOB_QUEUE_SIZE) {
@@ -250,6 +249,10 @@ int ccTaskDo(vector<Instrument>& insts) {
 }
 
 vector<Instrument> insts;
+
+Instrument& i(uint8_t ch) {
+  return insts.at(ch-1);
+}
 
 void bpm(int _bpm) {
   Generator::barDur(_bpm);
