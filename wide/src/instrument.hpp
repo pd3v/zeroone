@@ -22,7 +22,7 @@ using namespace std;
 class Instrument {
 public:
   Instrument(int id) : id(id),_ch(id) {}
-  
+
   void play(function<Notes(void)> _f) {
     isWritingPlayFunc->store(true);
     if (!Generator::parseDurPattern(_f).empty())
@@ -105,8 +105,8 @@ public:
   shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE);
   shared_ptr<vector<function<CC(void)>>> const ccs = make_shared<vector<function<CC(void)>>>(NO_CTRL);
   Notes out = {{0},0.,{1},1};
-  std::unique_ptr<std::atomic<bool>> isWritingPlayFunc = std::make_unique<std::atomic<bool>>(false);
-  std::unique_ptr<std::atomic<bool>> isWritingCCFunc = std::make_unique<std::atomic<bool>>(false);
+  unique_ptr<atomic<bool>> isWritingPlayFunc = make_unique<atomic<bool>>(false);
+  unique_ptr<atomic<bool>> isWritingCCFunc = make_unique<atomic<bool>>(false);
 private:
   int _ch;
   bool _mute = false;

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19.2)
 
 set(CMAKE_CXX_STANDARD 14)
 
-project(wideAPI)
+project(zeroone)
 
 set(LIBRARY_OUTPUT_NAME ${PROJECT_NAME})
 
@@ -13,8 +13,8 @@ add_library(
   src/generator.hpp
   src/instrument.hpp
   src/expression.hpp
-  src/wide.h
-  src/wide.cpp
+  src/engine.h
+  src/engine.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include/)
