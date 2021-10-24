@@ -1,5 +1,21 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.19.2)
 
-project(wide VERSION 1.1.0)
+set(CMAKE_CXX_STANDARD 14)
 
-add_executable(wide wide.cpp)
+project(zeroone)
+
+set(LIBRARY_OUTPUT_NAME ${PROJECT_NAME})
+
+add_library(
+  ${LIBRARY_OUTPUT_NAME} SHARED
+  src/notes.hpp
+  src/taskpool.hpp
+  src/generator.hpp
+  src/instrument.hpp
+  src/expression.hpp
+  src/engine.h
+  src/engine.cpp
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC include/)
+target_link_libraries("${PROJECT_NAME}" PUBLIC RtMidi)

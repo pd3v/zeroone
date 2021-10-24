@@ -4,8 +4,9 @@
 //  Created by @pd3v_
 //
 
-#pragma once
+// #pragma once
 
+#include "instrument.h"
 #include <vector>
 #include <functional>
 #include <math.h>
@@ -21,7 +22,7 @@ using namespace std;
 
 class Instrument {
 public:
-  Instrument(uint8_t id) : id(id),_ch(id) {}
+  Instrument(int id) : id(id),_ch(id) {}
   
   void play(function<Notes(void)> _f) {
     isWritingPlayFunc->store(true);
@@ -100,7 +101,7 @@ public:
     return _mute;
   }
   
-  uint8_t id;
+  int id;
   uint32_t step = 0, ccStep = 0;
   shared_ptr<function<Notes(void)>> const f = make_shared<function<Notes(void)>>(SILENCE);
   shared_ptr<vector<function<CC(void)>>> const ccs = make_shared<vector<function<CC(void)>>>(NO_CTRL);

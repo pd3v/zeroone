@@ -3,22 +3,7 @@
 //
 //  Created by @pd3v_
 //
-
-#include <iostream>
-#include <vector>
-#include <functional>
-#include <deque>
-#include <thread>
-#include <future>
-#include <chrono>
-#include <mutex>
-#include <algorithm>
-#include "RtMidi.h"
-#include "notes.hpp"
-#include "taskpool.hpp"
-#include "instrument.hpp"
-#include "generator.hpp"
-#include "expression.hpp"
+#include "engine.h"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
@@ -37,30 +22,9 @@ using ampT = double;
 using durT = rhythmType;
 using label = int;
 
-#define i1 insts[0]
-#define i2 insts[1]
-#define i3 insts[2]
-#define i4 insts[3]
-#define i5 insts[4]
-#define f(x) [&](){return x;}
-#define n(c,a,d) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),1};}       // note's absolute value setting, no octave parameter
-#define no(c,a,d,o) [&]()->Notes{return (Notes){(vector<int> c),a,(vector<int> d),o};}    // note's setting with octave parameter
-#define cc(ch,value) [&]()->CC{return (CC){ch,value};}
-
-const char* PROJ_NAME = "[w]AVES [i]N [d]ISTRESSED [en]TROPY";
-const uint16_t NUM_TASKS = 5;
-const float BAR_DUR_REF = 4000000; // microseconds
-const uint8_t JOB_QUEUE_SIZE = 64;
-const int CC_FREQ = 10; // Hz
-constexpr uint8_t CC_RESOLUTION = 1000/CC_FREQ; //milliseconds
-const float BPM_REF = 60;
-const int REST_NOTE = 127;
-const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
-const vector<function<CC()>> NO_CTRL = {};
-
 void pushSJob(vector<Instrument>& insts) {
   SJob j;
-  uint8_t id = 0;
+  int id = 0;
     
   while (TaskPool<SJob>::isRunning) {
     if (TaskPool<SJob>::jobs.size() < JOB_QUEUE_SIZE) {
@@ -80,7 +44,7 @@ void pushSJob(vector<Instrument>& insts) {
 
 void pushCCJob(vector<Instrument>& insts) {
   CCJob j;
-  uint8_t id = 0;
+  int id = 0;
   
   while (TaskPool<CCJob>::isRunning) {
     if (TaskPool<CCJob>::jobs.size() < JOB_QUEUE_SIZE) {
@@ -248,8 +212,6 @@ int ccTaskDo(vector<Instrument>& insts) {
   return j.id;
 }
 
-vector<Instrument> insts;
-
 Instrument& i(uint8_t ch) {
   return insts.at(ch-1);
 }
@@ -262,16 +224,8 @@ void bpm() {
   cout << floor(Generator::bpm) << " bpm" << endl;
 }
 
-uint32_t sync(uint8_t dur) {
+uint32_t sync(int dur) {
   return Metro::sync(dur);
-}
-
-uint32_t isync(uint8_t ch) {
-  return insts.at(ch-1).step;
-}
-
-uint32_t ccsync(uint8_t ch) {
-  return insts.at(ch-1).ccStep;
 }
 
 uint32_t playhead() {
@@ -314,6 +268,10 @@ void stop() {
   noctrl();
 }
 
+Instrument& i(int id) {
+  return insts.at(id-1);
+}
+
 void wide() {
   if (TaskPool<SJob>::isRunning) {
     std::thread([&](){
@@ -323,7 +281,7 @@ void wide() {
       // init instruments
       for (int id = 0;id < TaskPool<SJob>::numTasks;++id)
         insts.push_back(Instrument(id));
-      
+
       Metro::start();
       
       auto futPushSJob = async(launch::async,pushSJob,ref(insts));
