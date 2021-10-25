@@ -1,6 +1,6 @@
-# wide 
+# zero_one 
 
-__wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW.
+__zero_one__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW.
 
 ![livecoding_screenshot](https://github.com/pd3v/wide/blob/develop/livecoding_screenshot.png)
 
@@ -12,16 +12,16 @@ __wide__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer
 
 [__cling__](https://github.com/root-project/cling.git) (an interative C++ interpreter) is for the live coding enverionment.
 
-*Or you still can compile/link __wide__ as any other c++ library and code with it as so.*
+*Or you still can compile/link __zero_one__ as any other c++ library and code with it as so.*
 	
 ### How to use it
 
 ##### 1. run cling in terminal
-##### 2. at cling prompt load *wide* by typing the following line:
+##### 2. at cling prompt load *zero_one* by typing the following line:
 	
-	.x <path to>wide.cpp
+	.x <path to>01engine.cpp
 	
-#### 3. after message "wide is on <((()))>" appears, type:
+#### 3. after message "zero_one is on <((()))>" appears, type:
 	
 `i(1).play(n(({0,2,4}),0.9,{4},4)) // Instrument "1" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`
 
