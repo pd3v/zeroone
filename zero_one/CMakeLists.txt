@@ -13,8 +13,8 @@ add_library(
   src/generator.hpp
   src/instrument.hpp
   src/expression.hpp
-  src/engine.h
-  src/engine.cpp
+  src/zoengine.h
+  src/zoengine.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include/)
