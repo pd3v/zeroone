@@ -19,9 +19,9 @@ __zero_one__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI seque
 ##### 1. run cling in terminal
 ##### 2. at cling prompt load *zero_one* by typing the following line:
 	
-	.x <path to>01engine.cpp
+	.x <path to>zoengine.cpp
 	
-#### 3. after message "zero_one is on <((()))>" appears, type:
+#### 3. after message "zEROoNE is on <((()))>" appears, type:
 	
 `i(1).play(n(({0,2,4}),0.9,{4},4)) // Instrument "1" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`
 
