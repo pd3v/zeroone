@@ -228,6 +228,13 @@ uint32_t sync(int dur) {
   return Metro::sync(dur);
 }
 
+uint32_t isync(uint8_t ch) {
+  return insts.at(ch-1).step;
+}
+uint32_t ccsync(uint8_t ch) {
+  return insts.at(ch-1).ccStep;
+}
+
 uint32_t playhead() {
   return Metro::playhead();
 }
