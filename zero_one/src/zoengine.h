@@ -58,6 +58,6 @@ void unmute();
 void unmute(int inst);
 void noctrl();
 void stop();
-void wide();
+void zeroone();
 void on();
 void off();

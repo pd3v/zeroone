@@ -3,7 +3,7 @@
 //
 //  Created by @pd3v_
 //
-#include "engine.h"
+#include "zoengine.h"
 
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
@@ -279,7 +279,7 @@ Instrument& i(int id) {
   return insts.at(id-1);
 }
 
-void wide() {
+void zeroone() {
   if (TaskPool<SJob>::isRunning) {
     std::thread([&](){
       TaskPool<SJob>::numTasks = NUM_TASKS;
@@ -314,7 +314,7 @@ void on(){
     TaskPool<SJob>::isRunning = true;
     TaskPool<CCJob>::isRunning = true;
     
-    wide();
+    zeroone();
     
   } else {
       cout << PROJ_NAME << " : already : on <((()))>" << endl;
