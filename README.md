@@ -40,7 +40,7 @@ i1.play(n(
 
 or
 
-Instrument 2 sends cycle c4,cs4 and d4 notes to midi channel 2, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence.`
+Instrument 2 sends cycling c4,cs4 and d4 notes to midi channel 2, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence.
 
 ```
 i2.play(n(
@@ -50,4 +50,4 @@ i2.play(n(
 )) 
 ```
 
-##### 7. make some noise!
+## 7. make some noise!
