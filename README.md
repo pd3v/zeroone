@@ -50,4 +50,4 @@ i2.play(n(
 )) 
 ```
 
-## 7. make some noise!
+## Make some noise!
