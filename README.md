@@ -1,6 +1,6 @@
-# zero_one 
+# zeroOne 
 
-__zero_one__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW.
+__zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW.
 
 ![livecoding_screenshot](https://github.com/pd3v/wide/blob/develop/livecoding_screenshot.png)
 
@@ -12,26 +12,42 @@ __zero_one__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI seque
 
 [__cling__](https://github.com/root-project/cling.git) (an interative C++ interpreter) is for the live coding enverionment.
 
-*Or you still can compile/link __zero_one__ as any other c++ library and code with it as so.*
+*Or you still can compile/link __zeroOne__ as any other c++ library and code with it as so.*
 	
 ### How to use it
 
-##### 1. run cling in terminal
-##### 2. at cling prompt load *zero_one* by typing the following line:
+##### 1. open your synth ready to listen MIDI messages
+##### 2. open your command line software
+##### 3. go to zeroone/build folder
+##### 4. run cling by typing "cling -std=c++14"
+##### 5. at cling's prompt load *zeroOne* by entering the following lines:
 	
-	.x <path to>zoengine.cpp
+	[cling]$ .L zeroone
+	[cling]$ #include "../include/zeroone.h"
+	[cling]$ zeroone()
 	
-#### 3. after message "zEROoNE is on <((()))>" appears, type:
+##### 6. after message "zEROoNE on <((()))>" appears, copy/paste the code below:
 	
-`i(1).play(n(({0,2,4}),0.9,{4},4)) // Instrument "1" sends "C Major" chord notes to midi channel 1, 0.9 amplitude, 1/4 duration and 4th octave`
+Instrument 1 sends "C Major" chord notes to midi channel 1, 0.9 amplitude and 1/4 duration.
 
-the same as	
-
-`i(1).play(n((CMaj),0.9,{4},4)) // Instrument's scale defaults C Major scale`
-
+```
+i1.play(n(
+	({36,40,43}),
+	0.9,
+	{4}
+)) 
+```
 
 or
 
-`i(1).play(n(({0}),0.5,({4,8,4,8,4}),5)) // Instrument "1" sends c note to midi channel 1, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence and 5th octave`
+Instrument 2 sends cycle c4,cs4 and d4 notes to midi channel 2, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence.`
 
+```
+i2.play(n(
+	{cycle({48,49,50},isync(2))},
+	0.5,
+	({4,8,4,8,4})
+)) 
+```
 
+##### 7. make some noise!
