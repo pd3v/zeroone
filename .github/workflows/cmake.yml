@@ -8,32 +8,32 @@ on:
     types: [closed]
 
 jobs:
-  release_linux:
-    name: zeroOne Linux release
-    runs-on: ubuntu-latest
+  # release_linux:
+  #   name: zeroOne Linux release
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Create Build Directory
-        run: cmake -E make_directory ${{github.workspace}}/build
+  #     - name: Create Build Directory
+  #       run: cmake -E make_directory ${{github.workspace}}/build
 
-      - name: Configure CMake
-        run: cmake -S src -B build -DCMAKE_BUILD_TYPE=Release
+  #     - name: Configure CMake
+  #       run: cmake -S src -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
-        run: cmake --build ./build --config Release
+  #     - name: Build
+  #       run: cmake --build ./build --config Release
 
-      - name: Create Artifact
-        run: |
-          mkdir release
-          cp build/main release/main
+  #     - name: Create Artifact
+  #       run: |
+  #         mkdir release
+  #         cp build/main release/main
       
-      - name: Publish Linux Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: zeroOne Linux release
-          path: release
+  #     - name: Publish Linux Artifact
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: zeroOne Linux release
+  #         path: release
 
   release_macos:
     name: zeroOne macOS 11 release
@@ -46,7 +46,7 @@ jobs:
         run: cmake -E make_directory ${{github.workspace}}/build
 
       - name: Configure CMake
-        run: cmake -S src -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S src/ -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build ./build --config Release
