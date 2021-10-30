@@ -46,15 +46,15 @@ jobs:
         run: cmake -E make_directory ${{github.workspace}}/build
 
       - name: Configure CMake
-        run: cmake -S src/ -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S zeroone/src/ -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build ./build --config Release
 
       - name: Create Artifact
         run: |
-          mkdir release
-          cp build/main release/main
+          mkdir zeroone/release
+          cp zeroone/build/main zeroone/release/main
       
       - name: Publish MacOS 11 Artifact
         uses: actions/upload-artifact@v2
