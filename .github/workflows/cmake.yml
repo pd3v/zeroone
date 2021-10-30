@@ -2,9 +2,9 @@ name: Release Build
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
   pull_request:
-    branches: [main]
+    branches: [develop]
     types: [closed]
 
 jobs:
@@ -51,13 +51,13 @@ jobs:
       - name: Build
         run: cmake --build ./build --config Release
 
-      - name: Create Artifact
-        run: |
-          mkdir zeroone/release
-          cp zeroone/build/main zeroone/release/main
+      # - name: Create Artifact
+      #   run: |
+      #     mkdir zeroone/release
+      #     cp zeroone/build/main zeroone/release/main
       
-      - name: Publish MacOS 11 Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: zeroOne macOS 11 release
-          path: release
+      # - name: Publish MacOS 11 Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: zeroOne macOS 11 release
+      #     path: release
