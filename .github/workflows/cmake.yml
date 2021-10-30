@@ -9,7 +9,7 @@ on:
 
 jobs:
   release_linux:
-    name: zeroOne - Linux release
+    name: zeroOne Linux release
     runs-on: ubuntu-latest
 
     steps:
@@ -32,11 +32,11 @@ jobs:
       - name: Publish Linux Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: zeroOne - Linux release
+          name: zeroOne Linux release
           path: release
 
   release_macos:
-    name: zeroOne - macOS 11 release
+    name: zeroOne macOS 11 release
     runs-on: macos-11
 
     steps:
@@ -59,5 +59,5 @@ jobs:
       - name: Publish MacOS 11 Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: zeroOne - macOS 11 release
+          name: zeroOne macOS 11 release
           path: release
