@@ -1,0 +1,63 @@
+name: Release Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  # release_linux:
+  #   name: zeroOne Linux release
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Create Build Directory
+  #       run: cmake -E make_directory ${{github.workspace}}/build
+
+  #     - name: Configure CMake
+  #       run: cmake -S src -B build -DCMAKE_BUILD_TYPE=Release
+
+  #     - name: Build
+  #       run: cmake --build ./build --config Release
+
+  #     - name: Create Artifact
+  #       run: |
+  #         mkdir release
+  #         cp build/main release/main
+      
+  #     - name: Publish Linux Artifact
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: zeroOne Linux release
+  #         path: release
+
+  release_macos:
+    name: zeroOne macOS 11 release
+    runs-on: macos-11
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create Build Directory
+        run: cmake -E make_directory ${{github.workspace}}/build
+
+      - name: Configure CMake
+        run: cmake -S src/ -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build ./build --config Release
+
+      - name: Create Artifact
+        run: |
+          mkdir release
+          cp build/main release/main
+      
+      - name: Publish MacOS 11 Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: zeroOne macOS 11 release
+          path: release
