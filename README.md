@@ -41,7 +41,7 @@ i1.play(n(
 )) 
 ```
 
-or
+and/or
 
 Instrument 2 sends cycling c4,cs4 and d4 notes to midi channel 2, 0.5 amplitude, 1/4, 1/8, 1/4, 1/8, 1/4  duration sequence.
 
