@@ -1,0 +1,3 @@
+[submodule "external/diatonic"]
+	path = external/diatonic
+	url = https://github.com/pd3v/diatonic.git
