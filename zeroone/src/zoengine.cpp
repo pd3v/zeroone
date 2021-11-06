@@ -4,7 +4,9 @@
 //  Created by @pd3v_
 //
 #include "zoengine.h"
+#include "../../external/diatonic/include/diatonic.h"
 
+/*
 #ifdef __linux__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #elif __APPLE__
@@ -12,6 +14,7 @@
 #elif __unix__
   #pragma cling load("$LD_LIBRARY_PATH/librtmidi.dylib")
 #endif
+*/
 
 using namespace std;
 
