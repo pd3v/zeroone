@@ -18,8 +18,8 @@ target_include_directories(
 
 target_link_directories(
   ${PROJECT_NAME}
-  PRIVATE zeroone
-  PRIVATE external/diatonic
+  PUBLIC zeroone
+  PUBLIC external/diatonic
 )
 
 target_link_libraries("${PROJECT_NAME}" PUBLIC RtMidi diatonic)
