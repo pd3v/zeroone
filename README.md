@@ -21,12 +21,11 @@ __zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequen
 
 ##### 1. open your synth ready to listen MIDI messages
 ##### 2. open your command line software
-##### 3. go to zeroone/build folder
-##### 4. run cling by typing "cling -std=c++14"
+##### 3. run ./build.sh
 ##### 5. at cling's prompt load *zeroOne* by entering the following lines:
 	
 	[cling]$ .L zeroone
-	[cling]$ #include "../include/zeroone.h"
+	[cling]$ #include "../../zeroone/include/zeroone.h"
 	[cling]$ zeroone()
 	
 ##### 6. after message "zEROoNE on <((()))>" appears, copy/paste the code below:
