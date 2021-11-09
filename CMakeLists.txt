@@ -8,7 +8,7 @@ set(LIBRARY_OUTPUT_NAME ${PROJECT_NAME})
 
 add_subdirectory(zeroone)
 
-add_subdirectory(external/diatonic)
+add_subdirectory(external/diatonic/)
 
 target_include_directories(
   ${PROJECT_NAME} 
