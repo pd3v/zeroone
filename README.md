@@ -36,7 +36,7 @@ Instrument 1 sends "C Major" chord notes to midi channel 1, 0.9 amplitude and 1/
 i1.play(n(
 	({36,40,43}),
 	0.9,
-	{4}
+	{4},
 )) 
 ```
 
@@ -50,6 +50,23 @@ i2.play(n(
 	0.5,
 	({4,8,4,8,4})
 )) 
+```
+
+and/or
+
+Instrument 3 sends cycling pentatonic minor scale notes to midi channel 3 and modulates cc channel 1 and 2.
+
+```
+i3.play(n(
+	{cycle(
+		scale_::transpose(scale_::pentatonicminor,5),
+		isync(3))
+	},
+	0.9,
+	({4,8,4,8,4})),
+	cc(1,rnd(chop(10))),
+	cc(2,bounce(0,127))
+) 
 ```
 
 ## Make some noise!
