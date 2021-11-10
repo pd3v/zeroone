@@ -52,7 +52,9 @@ jobs:
 
       - name: Configure CMake
         # run: cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
-        run: cmake -S ${{github.directory}}. -B ${{github.directory}}/build -DCMAKE_BUILD_TYPE=Release
+        run: |
+          cm build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
       # run: cmake -S ${{github.workspace}} -B build -DCMAKE_BUILD_TYPE=Release
       #  run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
