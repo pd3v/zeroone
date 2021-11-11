@@ -40,26 +40,16 @@ jobs:
     runs-on: macos-11
 
     steps:
-      # - run: echo ${{github.repository}}
-      # - run: echo ${{github.workspace}}
-
       - uses: actions/checkout@v2
       
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
-        # run: cmake -E make_directory ${{github.repository}}/build
-        # run: cmake -E make_directory build
-
+      
       - name: Configure CMake
-        # run: cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
-        # run: |
-        #   cd ${{github.repository}}/build
-        #   cmake .. -DCMAKE_BUILD_TYPE=Release
-        run: cmake -S ${{github.workspace}} -B build -DCMAKE_BUILD_TYPE=Release
-      #  run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-      # - name: Build
-      #   run: cmake --build ./build --config Release
+      - name: Build
+        run: cmake --build ./build --config Release
 
       # - name: Create Artifact
       #   run: |
