@@ -2,9 +2,9 @@ name: Release Build
 
 on:
   push:
-    branches: [develop]
+    branches: [submodule_rtmidi]
   pull_request:
-    branches: [develop]
+    branches: [submodule_rtmidi]
     types: [closed]
 
 jobs:
