@@ -41,14 +41,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
+      
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
-        # run: cmake -E make_directory /build
-
+      
       - name: Configure CMake
-        run: cmake -S ${{github.workspace}} -B build -DCMAKE_BUILD_TYPE=Release
-      #  run: cmake -S src/ -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build ./build --config Release
