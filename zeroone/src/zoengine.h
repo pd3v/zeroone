@@ -8,7 +8,6 @@
 #include <mutex>
 #include <algorithm>
 
-#include "RtMidi.h"
 #include "notes.hpp"
 #include "taskpool.hpp"
 #include "instrument.hpp"

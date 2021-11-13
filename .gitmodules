@@ -1,3 +1,6 @@
 [submodule "external/diatonic"]
 	path = external/diatonic
 	url = https://github.com/pd3v/diatonic.git
+[submodule "external/rtmidi"]
+	path = external/rtmidi
+	url = https://github.com/thestk/rtmidi.git

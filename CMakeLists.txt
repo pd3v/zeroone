@@ -8,19 +8,22 @@ set(LIBRARY_OUTPUT_NAME ${PROJECT_NAME})
 
 add_subdirectory(zeroone)
 
-# add_subdirectory(external/diatonic)
+add_subdirectory(external/diatonic)
+
+add_subdirectory(external/rtmidi)
 
 target_include_directories(
   ${PROJECT_NAME} 
   PUBLIC zeroone/include/ 
-  # PUBLIC external/diatonic/include
+  PUBLIC external/diatonic/include
+  PUBLIC external/rtmidi/
 )
 
 target_link_directories(
   ${PROJECT_NAME}
   PUBLIC zeroone
-  # PUBLIC external/diatonic
+  PUBLIC external/diatonic
+  PUBLIC external/rtmidi
 )
 
-# target_link_libraries("${PROJECT_NAME}" PUBLIC RtMidi diatonic)
-target_link_libraries("${PROJECT_NAME}" PUBLIC RtMidi)
+target_link_libraries("${PROJECT_NAME}" PUBLIC diatonic RtMidi)

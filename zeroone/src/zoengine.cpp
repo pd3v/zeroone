@@ -5,6 +5,7 @@
 //
 #include "zoengine.h"
 #include "../../external/diatonic/include/diatonic.h"
+#include "../../external/rtmidi/RtMidi.h"
 
 /*
 #ifdef __linux__
