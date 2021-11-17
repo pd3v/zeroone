@@ -8,6 +8,7 @@
 #include <mutex>
 #include <algorithm>
 
+#include "../../external/rtmidi/RtMidi.h"
 #include "notes.hpp"
 #include "taskpool.hpp"
 #include "instrument.hpp"
@@ -60,3 +61,4 @@ void stop();
 void zeroone();
 void on();
 void off();
+bool chooseMidiPort( RtMidiOut *rtmidi );

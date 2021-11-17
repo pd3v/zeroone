@@ -17,7 +17,9 @@
 #endif
 */
 
-using namespace std;
+#include <unistd.h>
+  #define SLEEP( milliseconds ) usleep( (unsigned long) (milliseconds * 1000.0) )
+// using namespace std;
 
 using scaleType = const vector<int>;
 using chordType = vector<int>;
@@ -284,6 +286,49 @@ Instrument& i(int id) {
 }
 
 void zeroone() {
+  RtMidiOut *midiout = 0;
+  std::vector<unsigned char> message;
+
+  message.push_back(0);
+  message.push_back(0);
+  message.push_back(0);
+
+  // RtMidiOut constructor
+  try {
+    midiout = new RtMidiOut();
+  }
+  catch ( RtMidiError &error ) {
+    error.printMessage();
+    exit( EXIT_FAILURE );
+  }
+
+  // midiout.openPort(0);
+  // if (isPortOpen()) cout << "Port is open\n";
+  
+  // Call function to select port.
+  try {
+    // if ( chooseMidiPort( midiout ) == false ) goto cleanup;
+    midiout->openPort(0);
+  }
+  catch ( RtMidiError &error ) {
+    error.printMessage();
+    // goto cleanup;
+  }
+
+  // Note On: 144, 64, 90
+  message[0] = 144;
+  message[1] = 64;
+  message[2] = 90;
+  midiout->sendMessage( &message );
+
+  SLEEP( 500 );
+
+  // Note Off: 128, 64, 40
+  message[0] = 128;
+  message[1] = 64;
+  message[2] = 40;
+  midiout->sendMessage( &message );
+
   if (TaskPool<SJob>::isRunning) {
     std::thread([&](){
       TaskPool<SJob>::numTasks = NUM_TASKS;
@@ -309,6 +354,10 @@ void zeroone() {
     
     cout << PROJ_NAME << " on <((()))>" << endl;
   }
+
+  // cleanup:
+  // cout << "cleaning up and exit";
+   delete midiout;
 }
 
 void on(){
@@ -335,6 +384,46 @@ void off() {
   
   cout << PROJ_NAME << " off <>" << endl;
 }
+
+bool chooseMidiPort( RtMidiOut *rtmidi )
+{
+  std::cout << "\nWould you like to open a virtual output port? [y/N] ";
+
+  std::string keyHit;
+  std::getline( std::cin, keyHit );
+  if ( keyHit == "y" ) {
+    rtmidi->openVirtualPort();
+    return true;
+  }
+
+  std::string portName;
+  unsigned int i = 0, nPorts = rtmidi->getPortCount();
+  if ( nPorts == 0 ) {
+    std::cout << "No output ports available!" << std::endl;
+    return false;
+  }
+
+  if ( nPorts == 1 ) {
+    std::cout << "\nOpening " << rtmidi->getPortName() << std::endl;
+  }
+  else {
+    for ( i=0; i<nPorts; i++ ) {
+      portName = rtmidi->getPortName(i);
+      std::cout << "  Output port #" << i << ": " << portName << '\n';
+    }
+
+    do {
+      std::cout << "\nChoose a port number: ";
+      std::cin >> i;
+    } while ( i >= nPorts );
+  }
+
+  std::cout << "\n";
+  rtmidi->openPort( i );
+  std::cout << "\nPort opened";
+  return true;
+}
+
 
 int main() {
   return 0;
