@@ -25,7 +25,7 @@ __zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequen
 ##### 5. at cling's prompt load *zeroOne* by entering the following lines:
 	
 	[cling]$ .L zeroone
-	[cling]$ #include "../../zeroone/include/zeroone.h"
+	[cling]$ #include "../src/zoengine.h"
 	[cling]$ zeroone()
 	
 ##### 6. after message "zEROoNE on <((()))>" appears, copy/paste the code below:
