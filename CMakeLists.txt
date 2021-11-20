@@ -4,26 +4,34 @@ set(CMAKE_CXX_STANDARD 14)
 
 project(zeroone)
 
-set(LIBRARY_OUTPUT_NAME ${PROJECT_NAME})
-
-add_subdirectory(zeroone)
+add_library(
+  ${PROJECT_NAME} SHARED
+  src/zoengine.h
+  src/zoengine.cpp
+  src/notes.hpp
+  src/taskpool.hpp
+  src/instrument.hpp
+  src/generator.hpp
+  src/expression.hpp
+)
 
 add_subdirectory(external/diatonic)
-
 add_subdirectory(external/rtmidi)
 
 target_include_directories(
   ${PROJECT_NAME} 
-  PUBLIC zeroone/include/ 
-  PUBLIC external/diatonic/include
-  PUBLIC external/rtmidi/
+  PUBLIC external/diatonic/include/
+  PRIVATE external/rtmidi/
 )
 
 target_link_directories(
   ${PROJECT_NAME}
-  PUBLIC zeroone
-  PUBLIC external/diatonic
-  PUBLIC external/rtmidi
+  PUBLIC external/diatonic/src/
+  PRIVATE external/rtmidi/
 )
 
-target_link_libraries("${PROJECT_NAME}" PUBLIC diatonic RtMidi)
+target_link_libraries(
+  ${PROJECT_NAME}
+  LINK_PUBLIC diatonic 
+  LINK_PRIVATE rtmidi
+)
