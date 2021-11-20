@@ -64,4 +64,3 @@ void stop();
 void zeroone();
 void on();
 void off();
-// bool chooseMidiPort( RtMidiOut *rtmidi );
