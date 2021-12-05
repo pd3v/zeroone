@@ -25,8 +25,9 @@ public:
   
   void play(function<Notes(void)> _f) {
     isWritingPlayFunc->store(true);
-    if (!Generator::parseDurPattern(_f).empty())
+    if (!Generator::parseDurPattern(_f).empty()) {
       *f = _f;
+    }  
     isWritingPlayFunc->store(false);
   }
   
@@ -41,7 +42,7 @@ public:
     _ccs.emplace_back(fcc1);
     ctrl(fccn...);
   }
-  
+
   void ctrl(){
     isWritingCCFunc->store(true);
     *ccs = _ccs;
@@ -107,6 +108,7 @@ public:
   Notes out = {{0},0.,{1},1};
   unique_ptr<atomic<bool>> isWritingPlayFunc = make_unique<atomic<bool>>(false);
   unique_ptr<atomic<bool>> isWritingCCFunc = make_unique<atomic<bool>>(false);
+
 private:
   int _ch;
   bool _mute = false;

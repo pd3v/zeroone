@@ -16,6 +16,7 @@
 extern const float BAR_DUR_REF; // microseconds
 extern const float BPM_REF;
 extern const uint16_t NUM_TASKS;
+extern const std::function<Notes()> SILENCE;
 
 template <typename T>
 struct Job {

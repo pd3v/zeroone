@@ -21,8 +21,10 @@ void pushSJob(vector<Instrument>& insts) {
       id = id%insts.size();
       if (!insts.at(id).isWritingPlayFunc->load()) {
         j.id = id;
-        j.job = &*insts.at(id).f;
-      
+        // j.job = &*insts.at(id).f;
+        // j.job = std::make_shared<std::function<Notes(void)>>(*insts.at(id).f);
+        // j.job = std::make_weak<std::function<Notes(void)>>(*insts.at(id).f);
+        j.job = &insts.at(id).fRef;
         TaskPool<SJob>::jobs.push_back(j);
       
         id++;
@@ -91,21 +93,26 @@ int taskDo(vector<Instrument>& insts) {
     barDur = Generator::barDur();
     
     if (!TaskPool<SJob>::jobs.empty()) {
+      // std::cout << TaskPool<SJob>::jobs.size() << " " << std::flush;
       TaskPool<SJob>::mtx.lock();
       j = TaskPool<SJob>::jobs.front();
-      TaskPool<SJob>::jobs.pop_front();
+      // std::cout << "j.f" << (*TaskPool<SJob>::jobs.front().job)().notes.at(0) << std::endl;
+      // delete TaskPool<SJob>::jobs.front().job;
+      // TaskPool<SJob>::jobs.pop_front();
       TaskPool<SJob>::mtx.unlock();
+      // std::cout << TaskPool<SJob>::jobs.size() << " " << std::flush;
       
       if (j.job) {
         playFunc = *j.job;
-        
+        // j.job.reset();
+      
         playNotes = Generator::midiNote(playFunc);
         durationsPattern = playNotes.dur;
         
         insts[j.id].out = Generator::protoNotes;
         
         for (auto& dur : durationsPattern) {
-          playNotes = Generator::midiNoteExcludeDur(playFunc);
+          // playNotes = Generator::midiNoteExcludeDur(playFunc);
           
           noteStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           
@@ -135,6 +142,8 @@ int taskDo(vector<Instrument>& insts) {
           noteElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           noteDeltaTime = noteElapsedTime-noteStartTime;
           loopIterTime = noteDeltaTime > t ? noteDeltaTime-t : 0;
+
+          playNotes = Generator::midiNoteExcludeDur(playFunc);
         }
       }
       Metro::syncInstTask(j.id);
@@ -177,7 +186,7 @@ int ccTaskDo(vector<Instrument>& insts) {
       
       TaskPool<CCJob>::mtx.lock();
       j = TaskPool<CCJob>::jobs.front();
-      TaskPool<CCJob>::jobs.pop_front();
+      // TaskPool<CCJob>::jobs.pop_front();
       TaskPool<CCJob>::mtx.unlock();
       
       if (j.job) {
