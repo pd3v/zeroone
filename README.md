@@ -12,8 +12,15 @@ __zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequen
 
 [__cling__](https://github.com/root-project/cling.git) (an interative C++ interpreter) is for the live coding enverionment.
 
-[__cling builds for Linux and MacOS__](https://root.cern.ch/download/cling/)
+#### 1. Install cling
 
+##### On Mac and Linux using Homebrew
+1. go to 
+2. the command line and 
+2. type `brew install cling`
+
+#### 2. Or download cling
+Alternatively, you can download the right build for your machine:[__cling builds for Linux and MacOS__](https://root.cern.ch/download/cling/)
 
 *Or you still can compile/link __zeroOne__ as any other c++ library and code with it as so.*
 	
