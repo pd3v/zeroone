@@ -1,3 +1,17 @@
+## 0.6
+
+. Build now includes [__diatonic__](https://github.com/pd3v/diatonic) library
+
+. Build now includes **RtMidi** library
+
+____
+
+## 0.5
+
+. Builds as dynamic library
+
+____
+
 ## 0.4.6
 . New beat sync resettable random numbers functions - **rndsync** and **rndbunchsync** 
 
