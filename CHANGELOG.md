@@ -1,14 +1,12 @@
 ## 0.6
+. Includes [__diatonic__](https://github.com/pd3v/diatonic) library
 
-. Build now includes [__diatonic__](https://github.com/pd3v/diatonic) library
-
-. Build now includes **RtMidi** library
+. Includes **RtMidi** library
 
 ____
 
 ## 0.5
-
-. Builds as dynamic library
+. Builds as a dynamic library
 
 ____
 
