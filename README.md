@@ -15,8 +15,7 @@ __zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequen
 #### 1. Install cling
 
 ##### On Mac and Linux using Homebrew
-1. go to 
-2. the command line and 
+1. open your command line software
 2. type `brew install cling`
 
 #### 2. Or download cling
@@ -26,16 +25,18 @@ Alternatively, you can download the right build for your machine:[__cling builds
 	
 ### How to use it
 
-##### 1. open your synth ready to listen MIDI messages
-##### 2. open your command line software
-##### 3. run ./build.sh
-##### 5. at cling's prompt load *zeroOne* by entering the following lines:
+1. open your synth ready to listen MIDI messages
+2. open your command line software
+3. run ./build.sh
+4. at cling's prompt load **zeroone** by entering the following lines:
 	
 	[cling]$ .L zeroone
+	
 	[cling]$ #include "../src/zoengine.h"
+	
 	[cling]$ zeroone()
 	
-##### 6. after message "zEROoNE on <((()))>" appears, copy/paste the code below:
+5. after message "zEROoNE on <((()))>" appears, copy/paste the code below:
 	
 Instrument 1 sends "C Major" chord notes to midi channel 1, 0.9 amplitude and 1/4 duration.
 
