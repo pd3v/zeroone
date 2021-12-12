@@ -94,6 +94,8 @@ int taskDo(vector<Instrument>& insts) {
       jF = *j.job;
       TaskPool<SJob>::jobs.pop_front();
       TaskPool<SJob>::mtx.unlock();
+
+      Metro::syncInstTask(jId);
       
       if (j.job) {
         playNotes = Generator::midiNote(jF);
@@ -134,7 +136,6 @@ int taskDo(vector<Instrument>& insts) {
           playNotes = Generator::midiNoteExcludeDur(jF);
         }
       }
-      Metro::syncInstTask(jId);
     }
     
     barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
