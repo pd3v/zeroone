@@ -24,7 +24,6 @@ Alternatively, you can download the right build for your machine:[__cling builds
 *Or you still can compile/link __zeroOne__ as any other c++ library and code with it as so.*
 	
 ### How to use it
-
 1. open your synth ready to listen MIDI messages
 2. open your command line software
 3. run ./build.sh
