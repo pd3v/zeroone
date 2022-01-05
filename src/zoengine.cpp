@@ -19,7 +19,7 @@ void pushSJob(vector<Instrument>& insts) {
       if (!insts.at(id).isWritingPlayFunc->load()) {
         j.id = id;
         j.job = &*insts.at(id).f;
-        TaskPool<SJob>::jobs.push_back(j);
+        TaskPool<SJob>::jobs.emplace_back(j);
       
         id++;
       }
@@ -39,7 +39,7 @@ void pushCCJob(vector<Instrument>& insts) {
         j.id = id;
         j.job = &*insts.at(id).ccs;
       
-        TaskPool<CCJob>::jobs.push_back(j);
+        TaskPool<CCJob>::jobs.emplace_back(j);
       
         id++;
       }
@@ -66,7 +66,6 @@ inline Notes checkPlayingFunctionChanges(function<Notes()>& newFunc, function<No
 
 int taskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
-  std::unique_lock<mutex> lock(TaskPool<SJob>::mtx,std::defer_lock);
   long barStartTime, barElapsedTime, barDeltaTime, noteStartTime, noteElapsedTime, noteDeltaTime, loopIterTime = 0;
   long t = 0;
   double barDur;
@@ -86,18 +85,18 @@ int taskDo(vector<Instrument>& insts) {
   while (TaskPool<SJob>::isRunning) {
     barStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
     barDur = Generator::barDur();
-    
-    if (!TaskPool<SJob>::jobs.empty()) {
-      TaskPool<SJob>::mtx.lock();
-      j = TaskPool<SJob>::jobs.front();
-      jId = j.id; 
-      jF = *j.job;
-      TaskPool<SJob>::jobs.pop_front();
-      TaskPool<SJob>::mtx.unlock();
 
-      Metro::syncInstTask(jId);
-      
-      if (j.job) {
+    if (!TaskPool<SJob>::jobs.empty()) {
+      { 
+        std::lock_guard<std::mutex> lock(TaskPool<SJob>::mtx);
+        j = TaskPool<SJob>::jobs.front();
+        jId = j.id; 
+        jF = *j.job;
+        TaskPool<SJob>::jobs.pop_front();
+      }
+
+      if (jId != NO_INST_ASSIGN) {
+        // Metro::syncInstTask(jId);
         playNotes = Generator::midiNote(jF);
         durationsPattern = playNotes.dur;
         
@@ -134,16 +133,18 @@ int taskDo(vector<Instrument>& insts) {
           loopIterTime = noteDeltaTime > t ? noteDeltaTime-t : 0;
 
           playNotes = Generator::midiNoteExcludeDur(jF);
-        }
       }
+      
+        Metro::syncInstTask(jId);
+      }
+    
+      barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+      barDeltaTime = barElapsedTime-barStartTime;
+    
+      Metro::instsWaitingTimes.at(jId) = barDeltaTime > barDur ? barDeltaTime-barDur : 0;
     }
-    
-    barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-    barDeltaTime = barElapsedTime-barStartTime;
-    
-    Metro::instsWaitingTimes.at(jId) = barDeltaTime > barDur ? barDeltaTime-barDur : 0;
+    jId = NO_INST_ASSIGN;
   }
-  
   finishTask:
   // silencing playing notes before task finishing
   for (auto& note : playNotes.notes) {
@@ -157,12 +158,11 @@ int taskDo(vector<Instrument>& insts) {
 
 int ccTaskDo(vector<Instrument>& insts) {
   RtMidiOut midiOut = RtMidiOut();
-  std::unique_lock<mutex> lock(TaskPool<CCJob>::mtx,std::defer_lock);
   long startTime, elapsedTime;
   vector<unsigned char> ccMessage;
   
   CCJob j;
-  int jId = 0;
+  int jId = NO_INST_ASSIGN;
   std::vector<std::function<CC()>> ccs;
   vector<CC> ccComputed;
 
@@ -175,14 +175,15 @@ int ccTaskDo(vector<Instrument>& insts) {
     if (!TaskPool<CCJob>::jobs.empty()) {
       startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
-      TaskPool<CCJob>::mtx.lock();
-      j = TaskPool<CCJob>::jobs.front();
-      jId = j.id;
-      ccs = *j.job;
-      TaskPool<CCJob>::jobs.pop_front();
-      TaskPool<CCJob>::mtx.unlock();
-      
-      if (j.job) {
+      {
+        std::lock_guard<std::mutex> lock(TaskPool<CCJob>::mtx);
+        j = TaskPool<CCJob>::jobs.front();
+        jId = j.id;
+        ccs = *j.job;
+        TaskPool<CCJob>::jobs.pop_front();
+      }
+
+      if (jId != NO_INST_ASSIGN) {
         ccComputed = Generator::midiCC(ccs);
     
         for (auto &cc : ccComputed) {
@@ -198,6 +199,7 @@ int ccTaskDo(vector<Instrument>& insts) {
         this_thread::sleep_for(chrono::milliseconds(CC_RESOLUTION-(elapsedTime-startTime)));
       }
     }
+    jId = NO_INST_ASSIGN;
   }
   
   return jId;
