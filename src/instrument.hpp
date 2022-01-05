@@ -24,11 +24,11 @@ public:
   Instrument(uint8_t id) : id(id),_ch(id) {}
   
   void play(function<Notes(void)> _f) {
-    isWritingPlayFunc->store(true);
     if (!Generator::parseDurPattern(_f).empty()) {
+      isWritingPlayFunc->store(true);
       *f = _f;
+      isWritingPlayFunc->store(false);
     }  
-    isWritingPlayFunc->store(false);
   }
   
   // notes function and cc packs function combined
@@ -186,7 +186,7 @@ public:
   }
   
   static uint32_t playhead() {
-    return sync(4);
+    return step;
   }
   
 private:
