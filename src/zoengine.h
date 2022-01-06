@@ -38,7 +38,6 @@ const float BPM_REF = 60;
 const int REST_NOTE = 127;
 const function<Notes()> SILENCE = []()->Notes {return {(vector<int>{}),0,{1},1};};
 const vector<function<CC()>> NO_CTRL = {};
-const int8_t NO_INST = -1;
 
 void pushSJob(vector<Instrument>& insts);
 void pushCCJob(vector<Instrument>& insts);
