@@ -88,7 +88,7 @@ int taskDo(vector<Instrument>& insts) {
 
     if (!TaskPool<SJob>::jobs.empty()) {
       { 
-        std::lock_guard<std::mutex> lockJob(TaskPool<SJob>::mtx);
+        const std::lock_guard<std::mutex> lockJob(TaskPool<SJob>::mtx);
         j = TaskPool<SJob>::jobs.front();
         jId = j.id; 
         jF = *j.job;
@@ -173,7 +173,7 @@ int ccTaskDo(vector<Instrument>& insts) {
       startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
       
       {
-        std::lock_guard<std::mutex> lockJob(TaskPool<CCJob>::mtx);
+        const std::lock_guard<std::mutex> lockJob(TaskPool<CCJob>::mtx);
         j = TaskPool<CCJob>::jobs.front();
         jId = j.id;
         ccs = *j.job;
