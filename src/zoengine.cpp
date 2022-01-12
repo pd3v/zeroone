@@ -94,13 +94,15 @@ int taskDo(vector<Instrument>& insts) {
         jF = *j.job;
         TaskPool<SJob>::jobs.pop_front();
       }
+      
+      if (jId >= 0 && jId < NUM_TASKS) {
+        Metro::syncInstTask(jId);
 
-      if (j.job) {
         playNotes = Generator::midiNote(jF);
-        durationsPattern = playNotes.dur;
-        
         insts[jId].out = Generator::protoNotes;
 
+        durationsPattern = playNotes.dur;
+        
         for (auto& dur : durationsPattern) {
           noteStartTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
           
@@ -116,7 +118,7 @@ int taskDo(vector<Instrument>& insts) {
           if (!TaskPool<SJob>::isRunning) goto finishTask;
           
           t = dur-round(dur/barDur*Metro::instsWaitingTimes.at(jId)+loopIterTime);
-          t = (t > 0 && t < barDur) ? t : dur; // prevent negative values for duration and thread overrun
+          if (t <= 0 || t >= barDur) t = dur; // prevent negative values for duration and thread overrun (?)
           
           this_thread::sleep_for(chrono::microseconds(t));
           
@@ -133,13 +135,12 @@ int taskDo(vector<Instrument>& insts) {
 
           playNotes = Generator::midiNoteExcludeDur(jF);
         }  
-        Metro::syncInstTask(jId);
-      } 
-
-      barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-      barDeltaTime = barElapsedTime-barStartTime;
+        barElapsedTime = chrono::time_point_cast<chrono::microseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+        barDeltaTime = barElapsedTime-barStartTime;
     
-      Metro::instsWaitingTimes.at(jId) = barDeltaTime > barDur ? barDeltaTime-barDur : 0;
+        Metro::instsWaitingTimes.at(jId) = barDeltaTime > barDur ? barDeltaTime-barDur : 0;
+      } 
+      jId = -1;
     }
   }
   finishTask:
@@ -169,9 +170,9 @@ int ccTaskDo(vector<Instrument>& insts) {
   ccMessage.push_back(0);
   
   while (TaskPool<CCJob>::isRunning) {
+    startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
+
     if (!TaskPool<CCJob>::jobs.empty()) {
-      startTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
-      
       {
         const std::lock_guard<std::mutex> lockJob(TaskPool<CCJob>::mtx);
         j = TaskPool<CCJob>::jobs.front();
@@ -179,8 +180,8 @@ int ccTaskDo(vector<Instrument>& insts) {
         ccs = *j.job;
         TaskPool<CCJob>::jobs.pop_front();
       }
-
-      if (j.job) {
+      
+      if (jId >= 0 && jId < NUM_TASKS) {
         ccComputed = Generator::midiCC(ccs);
     
         for (auto &cc : ccComputed) {
@@ -194,6 +195,8 @@ int ccTaskDo(vector<Instrument>& insts) {
       
         elapsedTime = chrono::time_point_cast<chrono::milliseconds>(chrono::steady_clock::now()).time_since_epoch().count();
         this_thread::sleep_for(chrono::milliseconds(CC_RESOLUTION-(elapsedTime-startTime)));
+
+        jId = -1;
       }
     }
   }
