@@ -150,6 +150,11 @@ public:
     
     return 0;
   }
+
+  static void resetWaitingTimes() {
+    for(auto& t : instsWaitingTimes)
+      t = 0;
+  } 
   
   static void start() {
     on = true;
@@ -160,6 +165,7 @@ public:
     on = false;
     metronomeTask.get();
     TaskPool<SJob>::yieldTaskCntr.store(0);
+    resetWaitingTimes();
     step = 0;
   }
   
