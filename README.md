@@ -1,6 +1,6 @@
 # zeroOne 
 
-__zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW.
+__zeroOne__ is a polyphonic instrument, multi-instrument, DSLish/API MIDI sequencer for live coding music. It sends MIDI messages to any stand-alone synthesiser or DAW. [To some videos live coding with it](https://twitter.com/search?q=%2301livecoding&src=hashtag_click&f=live) (twitter/X).
 
 ![livecoding_screenshot](https://github.com/pd3v/wide/blob/develop/livecoding_screenshot.png)
 
